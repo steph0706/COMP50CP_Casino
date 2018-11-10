@@ -79,17 +79,27 @@ def clientthread(conn, addr):
     listen(conn, game_server, name)
 
 def listen(conn, game_server, username):
+    # possible input streams
+    sockets_list = [conn, game_server]
+
     while True:
         try:
-            message = conn.recv(2048)
-            if message:
-                print message
-                message_to_send = message
-                game_server.send((username, message))
-            else:
-                remove(conn)
-        except:
-            continue
+            # find sockets that are ready to be read from
+            read_sockets ,write_socket, error_socket = select.select(
+                sockets_list,[],[])
+
+            for socks in read_sockets:
+                if socks == game_server:
+                    # received message from game to send to user
+                    message = socks.recv(2048)
+                    conn.send(message)
+                elif socks == conn:
+                    # user sent message, now send to game server
+                    message = socks.recv(2048)
+                    game_server.send((username, message))
+                else:
+                    remove(conn)
+        except: continue
 
 # def broadcast(message, connection):
 #     for clients in list_of_clients:
@@ -112,4 +122,7 @@ while True:
     start_new_thread(clientthread,(conn,addr))
 
 conn.close()
+# BLACKJACK_SERVER.close()
+# POKER_SERVER.close()
+# ROULETTE_SERVER.close()
 SERVER.close()
