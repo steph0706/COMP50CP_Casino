@@ -26,6 +26,7 @@ SERVER.listen(100)
 # POKER_SERVER.connect((IP_ADDRESS, POKER_PORT))
 # ROULETTE_SERVER.connect((IP_ADDRESS, ROULETTE_PORT))
 
+# TODO: delete later
 list_of_clients = []
 list_of_users = []
 
@@ -46,42 +47,57 @@ def clientthread(conn, addr):
                 conn.send("Sorry, name is already taken, try again.")
         except:
             continue
-
+    
     conn.send("Which game do you want to join? Poker, Blackjack, or Roulette")
-    game_server = None
+    game_server = ask_user_for_game(conn, list_of_users, name)
+    while game_server is not None:
+        listen(conn, game_server, name)
+        conn.send(
+            "Quit, Poker, Blackjack or Roulette?")
+        game_server = ask_user_for_game(conn, list_of_users, name)
+
+    conn.send("QUIT")
+    #remove user from list
+
+
+def ask_user_for_game(conn, list_of_users, name):
     while True:
         try:
             game = conn.recv(2048).lower()[0:-1]
             if game == 'poker':
-                idx = list_of_users.index((conn, name, None, INIT_CASH))
-                list_of_users[idx] = (conn, name, 'poker', INIT_CASH)
+                idx = [i for i, user in enumerate(list_of_users) 
+                            if user[1] == name]
+                list_of_users[idx[0]] = (conn, name, 'poker', INIT_CASH)
                 game_server = POKER_SERVER
                 conn.send('Joined Poker!')
-                break
+                return game_server
             elif game == 'blackjack':
-                idx = list_of_users.index((conn, name, None, INIT_CASH))
-                list_of_users[idx] = (conn, name, 'blackjack', INIT_CASH)
+                idx = [i for i, user in enumerate(list_of_users) 
+                            if user[1] == name]
+                list_of_users[idx[0]] = (conn, name, 'blackjack', INIT_CASH)
                 game_server = BLACKJACK_SERVER
                 conn.send('Joined Blackjack!')
-                break
+                return game_server
             elif game == 'roulette':
-                idx = list_of_users.index((conn, name, None, INIT_CASH))
-                list_of_users[idx] = (conn, name, 'roulette', INIT_CASH)
+                idx = [i for i, user in enumerate(list_of_users) 
+                            if user[1] == name]
+                list_of_users[idx[0]] = (conn, name, 'roulette', INIT_CASH)
                 game_server = ROULETTE_SERVER
                 conn.send('Joined Roulette!')
-                break
+                return game_server
+            elif game == 'quit' or game == '--q':
+                return None
             else:
                 conn.send(
                     "Error, you must pick either Poker, Blackjack or Roulette")
         except:
             continue
 
-    listen(conn, game_server, name)
+
 
 def listen(conn, game_server, username):
     # possible input streams
     sockets_list = [conn, game_server]
-
     while True:
         try:
             # find sockets that are ready to be read from
@@ -95,20 +111,20 @@ def listen(conn, game_server, username):
                     conn.send(message)
                 elif socks == conn:
                     # user sent message, now send to game server
-                    message = socks.recv(2048)
+                    message = socks.recv(2048).lower()[0:-1]
+                    if message == '--q':
+                        idx = [i for i, user in enumerate(list_of_users) 
+                            if user[1] == username]
+                        list_of_users[idx[0]] = (
+                            conn, username, None, INIT_CASH)
+                        # TODO: get new user balance/money
+                        return
                     game_server.send((username, message))
                 else:
                     remove(conn)
-        except: continue
+        except:
+            continue
 
-# def broadcast(message, connection):
-#     for clients in list_of_clients:
-#         if clients!=connection:
-#             try:
-#                 clients.send(message)
-#             except:
-#                 clients.close()
-#                 remove(clients)
 
 def remove(connection):
     if connection in list_of_clients:

@@ -10,20 +10,26 @@ IP_ADDRESS = str(sys.argv[1])
 PORT = int(sys.argv[2])
 server.connect((IP_ADDRESS, PORT))
 
-while True:
 
-    # possible input streams
-    sockets_list = [sys.stdin, server]
+def listen():
+    while True:
 
-    # find sockets that are ready to be read from
-    read_sockets,write_socket, error_socket = select.select(sockets_list,[],[])
+        # possible input streams
+        sockets_list = [sys.stdin, server]
 
-    for socks in read_sockets:
-        if socks == server:
-            message = socks.recv(2048)
-            print message
-        else:
-            message = sys.stdin.readline()
-            server.send(message)
-            sys.stdout.flush()
+        # find sockets that are ready to be read from
+        read_sockets,write_socket, error_socket = select.select(sockets_list,[],[])
+
+        for socks in read_sockets:
+            if socks == server:
+                message = socks.recv(2048)
+                if message == "QUIT":
+                    return
+                print message
+            else:
+                message = sys.stdin.readline()
+                server.send(message)
+                sys.stdout.flush()
+
+listen()
 server.close()
