@@ -1,6 +1,7 @@
 import socket
 import select
 import sys
+import threading
 from thread import *
   
 if len(sys.argv) != 3:
@@ -28,60 +29,57 @@ SERVER.listen(100)
 
 # TODO: delete later
 list_of_clients = []
-list_of_users = []
+list_of_users = {}
+list_of_users_lock = threading.Lock()
 
-def clientthread(conn, addr):
-    conn.send("What is your name?")
+def client_init(conn, addr):
+    conn.send("What is your name? Maximum 10 characters.")
     name = ""
     while True:
         try:
             name = conn.recv(2048)
-            if name not in list_of_users:
+            list_of_users_lock.acquire()
+            if name not in list_of_users and len(name) < 11:
                 """
                     every person is kept as a tuple of its socket, the game they
                     are in and the amount of cash they have
                 """
-                list_of_users.append((conn, name, None, INIT_CASH))
+                list_of_users[name] = (conn, None, INIT_CASH)
+                list_of_users_lock.release()
                 break
             else:
-                conn.send("Sorry, name is already taken, try again.")
+                conn.send(
+                    "Sorry, name is already taken or too long, try again.")
+                list_of_users_lock.release()
         except:
+            list_of_users.release()
             continue
     
     conn.send("Which game do you want to join? Poker, Blackjack, or Roulette")
     game_server = ask_user_for_game(conn, list_of_users, name)
-    while game_server is not None:
-        listen(conn, game_server, name)
-        conn.send(
-            "Quit, Poker, Blackjack or Roulette?")
-        game_server = ask_user_for_game(conn, list_of_users, name)
-
-    conn.send("QUIT")
-    #remove user from list
-
 
 def ask_user_for_game(conn, list_of_users, name):
     while True:
         try:
             game = conn.recv(2048).lower()[0:-1]
             if game == 'poker':
-                idx = [i for i, user in enumerate(list_of_users) 
-                            if user[1] == name]
-                list_of_users[idx[0]] = (conn, name, 'poker', INIT_CASH)
+                list_of_users_lock.acquire()
+                list_of_users[name] = (conn, POKER_SERVER, INIT_CASH)
+                list_of_users_lock.release()
                 game_server = POKER_SERVER
                 conn.send('Joined Poker!')
                 return game_server
             elif game == 'blackjack':
-                idx = [i for i, user in enumerate(list_of_users) 
-                            if user[1] == name]
-                list_of_users[idx[0]] = (conn, name, 'blackjack', INIT_CASH)
+                list_of_users_lock.acquire()
+                list_of_users[name] = (conn, BLACKJACK_SERVER, INIT_CASH)
+                list_of_users_lock.release()
                 game_server = BLACKJACK_SERVER
                 conn.send('Joined Blackjack!')
                 return game_server
             elif game == 'roulette':
-                idx = [i for i, user in enumerate(list_of_users) 
-                            if user[1] == name]
-                list_of_users[idx[0]] = (conn, name, 'roulette', INIT_CASH)
+                list_of_users_lock.acquire()
+                list_of_users[name] = (conn, ROULETTE_SERVER, INIT_CASH)
+                list_of_users_lock.release()
                 game_server = ROULETTE_SERVER
                 conn.send('Joined Roulette!')
                 return game_server
@@ -94,37 +92,49 @@ def ask_user_for_game(conn, list_of_users, name):
             continue
 
 
+def broadcast(message, clients): 
+    for client in clients: 
+        try: 
+            client.send(message) 
+        except: 
+            clients.close() 
+            remove(clients) 
 
-def listen(conn, game_server, username):
-    # possible input streams
-    sockets_list = [conn, game_server]
+def listen():
+    game_servers = [BLACKJACK_SERVER, POKER_SERVER, ROULETTE_SERVER]
+
     while True:
         try:
-            # find sockets that are ready to be read from
+            list_of_users_lock.acquire()
+            user_sockets_list = [val[0] for user, val in list_of_users.items()]
+            list_of_users_lock.release()
+            socket_list = user_sockets_list #+ game_servers
+            print socket_list
             read_sockets ,write_socket, error_socket = select.select(
-                sockets_list,[],[])
-
+                socket_list,[],[])
+            print "socket"
+            print user_sockets_list
             for socks in read_sockets:
-                if socks == game_server:
-                    # received message from game to send to user
+                print socks
+                if socks in game_servers:
+                    message = socks.recv(8192).split()
+                    msg_text = message[0]
+                    clients = message[1:]
+                    broadcast(msg_text, clients)
+                elif socks in user_sockets_list:
+                    # client sent messsage
                     message = socks.recv(2048)
-                    conn.send(message)
-                elif socks == conn:
-                    # user sent message, now send to game server
-                    message = socks.recv(2048).lower()[0:-1]
-                    if message == '--q':
-                        idx = [i for i, user in enumerate(list_of_users) 
-                            if user[1] == username]
-                        list_of_users[idx[0]] = (
-                            conn, username, None, INIT_CASH)
-                        # TODO: get new user balance/money
-                        return
-                    game_server.send((username, message))
-                else:
+                    print message
+                elif socks != sys.stdin: 
                     remove(conn)
+                else:
+                    continue
+            print "end of forloop"
+        except KeyboardInterrupt: 
+            sys.exit(0)
         except:
+            print "execpting"
             continue
-
 
 def remove(connection):
     if connection in list_of_clients:
@@ -135,7 +145,11 @@ while True:
     list_of_clients.append(conn)
     print addr[0] + " connected"
 
-    start_new_thread(clientthread,(conn,addr))
+    start_new_thread(client_init,(conn,addr))
+    listen_thread = threading.Thread(target = listen, args = [])
+    listen_thread.start()
+    listen_thread.join()
+
 
 conn.close()
 # BLACKJACK_SERVER.close()
