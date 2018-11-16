@@ -67,6 +67,8 @@ def ask_user_for_game(conn, list_of_users, name):
                 list_of_users[name] = (conn, POKER_SERVER, INIT_CASH)
                 list_of_users_lock.release()
                 game_server = POKER_SERVER
+                msg = 'JOIN' + name + " " + INIT_CASH
+                # POKER_SERVER.send(msg)
                 conn.send('Joined Poker!')
                 return game_server
             elif game == 'blackjack':
@@ -74,6 +76,8 @@ def ask_user_for_game(conn, list_of_users, name):
                 list_of_users[name] = (conn, BLACKJACK_SERVER, INIT_CASH)
                 list_of_users_lock.release()
                 game_server = BLACKJACK_SERVER
+                msg = 'JOIN' + name + " " + INIT_CASH
+                # BLACKJACK_SERVER.send(msg)
                 conn.send('Joined Blackjack!')
                 return game_server
             elif game == 'roulette':
@@ -81,6 +85,8 @@ def ask_user_for_game(conn, list_of_users, name):
                 list_of_users[name] = (conn, ROULETTE_SERVER, INIT_CASH)
                 list_of_users_lock.release()
                 game_server = ROULETTE_SERVER
+                msg = 'JOIN' + name + " " + INIT_CASH
+                ROULETTE_SERVER.send(msg)
                 conn.send('Joined Roulette!')
                 return game_server
             elif game == 'quit' or game == '--q':
@@ -93,8 +99,11 @@ def ask_user_for_game(conn, list_of_users, name):
 
 
 def broadcast(message, clients): 
-    for client in clients: 
+    for name in clients: 
         try: 
+            list_of_users_lock.acquire()
+            client = list_of_users[name]
+            list_of_users_lock.release()
             client.send(message) 
         except: 
             clients.close() 
@@ -114,6 +123,7 @@ def listen():
                 socket_list,[],[])
             print "socket"
             print user_sockets_list
+            
             for socks in read_sockets:
                 print socks
                 if socks in game_servers:
@@ -124,6 +134,13 @@ def listen():
                 elif socks in user_sockets_list:
                     # client sent messsage
                     message = socks.recv(2048)
+
+                    # find name of user who sent it by socket
+                    name = [user for user,val in list_of_users.items() 
+                        if val[0] == socks]
+                    game_server = list_of_users[name][1]
+
+                    game_server.send(name + " " + message)
                     print message
                 elif socks != sys.stdin: 
                     remove(conn)
