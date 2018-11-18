@@ -1,106 +1,149 @@
 import socket
-import select
 import sys
-from thread import *
- 
+import threading
+import json
+from Queue import *
+import blackjack_server
 
 SERVER = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 SERVER.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
- 
-if len(sys.argv) != 3:
-    print "Correct usage: script, IP address, port number"
-    exit()
+INIT_MONEY = 1000
 
-IP_ADDRESS = str(sys.argv[1])
-PORT = int(sys.argv[2])
+def init_game_connection(ip_addr, port, game_fun):
+    game = threading.Thread(target=game_fun, args=(ip_addr, port))
+    game.start()
+    conn, addr = SERVER.accept()
+    return [game, conn, addr]
 
-SERVER.bind((IP_ADDRESS, PORT))
-SERVER.listen(100)
+def init_game_servers(games, ip_addr, port, game_queue):
+    game_list = {
+        'blackjack' : blackjack_server.connect_to_casino
+        # roulette server
+        # baccarat server
+    }
 
-list_of_clients = []
-list_of_usernames = []
+    for game, fun in game_list:
+        games[game] = init_game_connection(ip_addr, port, fun)
+        game_listen = threading.Thread(target=listen_for_game,
+                      args=(games, game, games[game][1], game_queue))
 
-def clientthread(conn, addr):
-    conn.send("What is your name?")
+def init_user_loop(games, users, usr_queue):
+    # adds user -> address to users dict
     while True:
-        try:
-            name = conn.recv(2048)
-            if name not in list_of_usernames:
-                list_of_usernames.append(name)
-                break
-            else:
-                conn.send("Sorry, name is already taken, try again.")
-        except:
-            continue
+        print("listening for user")
+        name = ''
+        game = ''
+        conn, addr = SERVER.accept()
 
-    conn.send("Which game do you want to join? Poker, Blackjack, or Roulette")
+        print("got user")
+        conn.send("What is your name?")
+        while True:
+            try:
+                name = conn.recv(2048)[0:-1]
+                if name not in users:
+                    users[name] = [conn, INIT_MONEY]
+                    print(name + " connected")
+                    break
+                else:
+                    conn.send("Sorry, name is taken, try again.")
+            except:
+                continue
 
-    while True:
-        try:
-            game = conn.recv(2048).lower()[0:-1]
-            print game
-            if game == 'poker':
-                conn.send('Joined poker!')
-                break
-            elif game == 'blackjack':
-                conn.send('Joined blackjack')
-                break
-            elif game == 'roulette':
-                conn.send('joined roulette')
-                break
-            else:
-                conn.send("Error, you must pick either Poker, Blackjack or Roulette")
-        except:
-            continue
+        # add game to dict
+        conn.send("Which game do you want to join? Baccarat, Blackjack, " \
+                  + "or Roulette?")
+        while True:
+            try:
+                game = conn.recv(2048).lower()[0:-1]
+                if game == 'baccarat':
+                    conn.send("Joined Baccarat!")
+                    break
+                elif game == 'blackjack':
+                    conn.send("Joined Blackjack!")
+                    break
+                elif game == 'roulette':
+                    conn.send("Joined Roulette!")
+                    break
+                else:
+                    conn.send("Invalid option. Please choose between " \
+                              + "Baccarat, Blackjack, or Roulette.")
+            except:
+                continue
 
+        msg_from_user_to_game(games, game, name, users[name][1], 0, 'join')
+        users[name].append(game)
+        user_listen = threading.Thread(target=listen_for_user, 
+                                       args=(users, name, conn, usr_queue))
+        user_listen.start()
+
+def msg_from_user_to_game(games, game, user, money, betsize, msg):
+    proper_msg = set(['join', 'quit']) # add more msg later
+    if msg not in proper_msg:
+        return False
+
+    game_conn = games[game][1]
+    game_conn.send(json.dumps([msg, user, money, betsize]))
+    return True
+
+def listen_for_game(games, name, conn, game_queue):
     while True:
         try:
             message = conn.recv(2048)
             if message:
-                print  message
-                message_to_send = message
-                broadcast(message_to_send, conn)
-            else:
-                """message may have no content if the connection
-                is broken, in this case we remove the connection"""
-                remove(conn)
+                # TODO: use json to serialize list and process
+                x = 1 # temp code
         except:
             continue
 
-def broadcast(message, connection):
-    for clients in list_of_clients:
-        if clients!=connection:
+def listen_for_user(users, name, conn, usr_queue):
+    while True:
+        try:
+            message = conn.recv(2048)
+            if message:
+                usr_queue.put((name, message))
+            else:
+                users.pop(name)
+        except:
+            continue
+
+def broadcast(message, users, sender):
+    for user, data in users.iteritems():
+        if user != sender:
             try:
-                clients.send(message)
+                data[0].send(sender + ": " + message)
             except:
-                clients.close()
+                data[0].close()
+                users.pop(user)
 
-                # if the link is broken, we remove the client
-                remove(clients)
+def server_loop():
+    games = {}
+    users = {}
+    game_queue = Queue()
+    usr_queue = Queue()
 
+    game_loop = threading.Thread(target=init_game_servers,
+                                 args=(games, ip_addr, port, game_queue))
+    user_loop = threading.Thread(target=init_user_loop, 
+                                 args=(games, users, usr_queue))
+    user_loop.start()
+    while True:
+        if usr_queue.empty():
+            continue
+        else:
+            sender, msg = usr_queue.get()
+            broadcast(msg, users, sender)
 
-def remove(connection):
-    if connection in list_of_clients:
-        list_of_clients.remove(connection)
+def main(args):
+    if len(args) != 3:
+        sys.exit("Usage: script, IP address, port number")
 
-while True:
-  
-    """Accepts a connection request and stores two parameters,
-    conn which is a socket object for that user, and addr
-    which contains the IP address of the client that just
-    connected"""
-    conn, addr = SERVER.accept()
-  
-    """Maintains a list of clients for ease of broadcasting
-    a message to all available people in the chatroom"""
-    list_of_clients.append(conn)
- 
-    # prints the address of the user that just connected
-    print addr[0] + " connected"
+    ip_addr = str(args[1])
+    port    = int(args[2])
 
-    # creates and individual thread for every user 
-    # that connects
-    start_new_thread(clientthread,(conn,addr))
+    SERVER.bind((ip_addr, port))
+    SERVER.listen(100)
 
-conn.close()
-SERVER.close()
+    server_loop()
+
+if __name__ == '__main__':
+    main(sys.argv)
