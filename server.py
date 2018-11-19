@@ -13,6 +13,7 @@ def init_game_connection(ip_addr, port, game_fun):
     game = threading.Thread(target=game_fun, args=(ip_addr, port))
     game.start()
     conn, addr = SERVER.accept()
+    print("connected to game server")
     return [game, conn, addr]
 
 def init_game_servers(games, ip_addr, port, game_queue):
@@ -22,15 +23,16 @@ def init_game_servers(games, ip_addr, port, game_queue):
         # baccarat server
     }
 
-    for game, fun in game_list:
+    for game, fun in game_list.iteritems():
         games[game] = init_game_connection(ip_addr, port, fun)
         game_listen = threading.Thread(target=listen_for_game,
                       args=(games, game, games[game][1], game_queue))
+        game_listen.start()
+        print(game)
 
 def init_user_loop(games, users, usr_queue):
     # adds user -> address to users dict
     while True:
-        print("listening for user")
         name = ''
         game = ''
         conn, addr = SERVER.accept()
@@ -86,12 +88,16 @@ def msg_from_user_to_game(games, game, user, money, betsize, msg):
     return True
 
 def listen_for_game(games, name, conn, game_queue):
+    actions = {
+        'users' : print_users
+        # add more actions later
+    }
     while True:
         try:
-            message = conn.recv(2048)
+            message = json.loads(conn.recv(2048))
             if message:
-                # TODO: use json to serialize list and process
-                x = 1 # temp code
+                action = message[0]
+                actions[action](message[1:])
         except:
             continue
 
@@ -106,6 +112,9 @@ def listen_for_user(users, name, conn, usr_queue):
         except:
             continue
 
+def print_users(users):
+    print(users)
+
 def broadcast(message, users, sender):
     for user, data in users.iteritems():
         if user != sender:
@@ -115,7 +124,7 @@ def broadcast(message, users, sender):
                 data[0].close()
                 users.pop(user)
 
-def server_loop():
+def server_loop(ip_addr, port):
     games = {}
     users = {}
     game_queue = Queue()
@@ -123,6 +132,7 @@ def server_loop():
 
     game_loop = threading.Thread(target=init_game_servers,
                                  args=(games, ip_addr, port, game_queue))
+    game_loop.start()
     user_loop = threading.Thread(target=init_user_loop, 
                                  args=(games, users, usr_queue))
     user_loop.start()
@@ -143,7 +153,7 @@ def main(args):
     SERVER.bind((ip_addr, port))
     SERVER.listen(100)
 
-    server_loop()
+    server_loop(ip_addr, port)
 
 if __name__ == '__main__':
     main(sys.argv)
