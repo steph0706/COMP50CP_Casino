@@ -2,34 +2,31 @@ import socket
 import select
 import sys
 
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-if len(sys.argv) != 3:
-    print "Correct usage: script, IP address, port number"
-    exit()
-IP_ADDRESS = str(sys.argv[1])
-PORT = int(sys.argv[2])
-server.connect((IP_ADDRESS, PORT))
+SERVER = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+def main(args):
+	if len(args) != 3:
+		sys.exit("Usage: script, IP address, port number")
+	ip_addr = str(args[1])
+	port    = int(args[2])
 
-def listen():
-    while True:
+	SERVER.connect((ip_addr, port))
 
-        # possible input streams
-        sockets_list = [sys.stdin, server]
+	print("connected to server")
+	while True:
+		sockets_list = [sys.stdin, SERVER]
 
-        # find sockets that are ready to be read from
-        read_sockets,write_socket, error_socket = select.select(sockets_list,[],[])
+		read_sockets, _, _ = select.select(sockets_list, [], [])
 
-        for socks in read_sockets:
-            if socks == server:
-                message = socks.recv(2048)
-                if message == "QUIT":
-                    return
-                print message
-            else:
-                message = sys.stdin.readline()
-                server.send(message)
-                sys.stdout.flush()
+		for socks in read_sockets:
+			if socks == SERVER:
+				message = socks.recv(2048)
+				print(message)
+			else:
+				message = sys.stdin.readline()
+				SERVER.send(message)
+				sys.stdout.flush()
+	SERVER.close()
 
-listen()
-server.close()
+if __name__ == '__main__':
+	main(sys.argv)
