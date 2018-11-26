@@ -3,34 +3,32 @@ import sys
 import threading
 import json
 from Queue import *
-import blackjack_server
+import game_server
 
 SERVER = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 SERVER.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 INIT_MONEY = 1000
 
-def init_game_connection(ip_addr, port, game_fun):
-    game = threading.Thread(target=game_fun, args=(ip_addr, port))
-    game.start()
-    conn, addr = SERVER.accept()
-    print("connected to game server")
-    return [game, conn, addr]
+###########################################################################
+# init loop functions
+def init_game_servers(games, game_queue):
+    print("Initializing games")
+    game_set = set(['blackjack', 'roulette', 'baccarat'])
+    while len(games) < 3:
+        conn, addr = SERVER.accept()
+        print("Accepted game")
+        conn.send(json.dumps(['name']))
+        name = conn.recv(2048)
+        if name not in game_set:
+            sys.stderr.write("Unrecognized game")
+        else:
+            games[name] = [conn]
+            game_listen = threading.Thread(target=listen_for_game,
+                          args=(games, name, conn, game_queue))
+            game_listen.start()
+            print(name)
 
-def init_game_servers(games, ip_addr, port, game_queue):
-    game_list = {
-        'blackjack' : blackjack_server.connect_to_casino
-        # roulette server
-        # baccarat server
-    }
-
-    for game, fun in game_list.iteritems():
-        games[game] = init_game_connection(ip_addr, port, fun)
-        game_listen = threading.Thread(target=listen_for_game,
-                      args=(games, game, games[game][1], game_queue))
-        game_listen.start()
-        print(game)
-
-def init_user_loop(games, users, usr_queue):
+def init_user_loop(games, users, users_lock, usr_queue):
     # adds user -> address to users dict
     while True:
         name = ''
@@ -43,7 +41,8 @@ def init_user_loop(games, users, usr_queue):
             try:
                 name = conn.recv(2048)[0:-1]
                 if name not in users:
-                    users[name] = [conn, INIT_MONEY]
+                    with users_lock:
+                        users[name] = [conn, INIT_MONEY]
                     print(name + " connected")
                     break
                 else:
@@ -73,17 +72,22 @@ def init_user_loop(games, users, usr_queue):
                 continue
 
         msg_from_user_to_game(games, game, name, users[name][1], 0, 'join')
-        users[name].append(game)
+        with users_lock:
+            users[name].append(game)
+        
         user_listen = threading.Thread(target=listen_for_user, 
-                                       args=(users, name, conn, usr_queue))
+                                       args=(users, users_lock, name, conn, 
+                                             usr_queue))
         user_listen.start()
 
+###########################################################################
+# message sending functions
 def msg_from_user_to_game(games, game, user, money, betsize, msg):
     proper_msg = set(['join', 'quit']) # add more msg later
     if msg not in proper_msg:
         return False
 
-    game_conn = games[game][1]
+    game_conn = games[game][0]
     game_conn.send(json.dumps([msg, user, money, betsize]))
     return True
 
@@ -101,47 +105,56 @@ def listen_for_game(games, name, conn, game_queue):
         except:
             continue
 
-def listen_for_user(users, name, conn, usr_queue):
+def listen_for_user(users, users_lock, name, conn, usr_queue):
     while True:
         try:
             message = conn.recv(2048)
             if message:
                 usr_queue.put((name, message))
             else:
-                users.pop(name)
+                with users_lock:
+                    users.pop(name)
         except:
             continue
 
 def print_users(users):
     print(users)
 
-def broadcast(message, users, sender):
-    for user, data in users.iteritems():
-        if user != sender:
-            try:
-                data[0].send(sender + ": " + message)
-            except:
-                data[0].close()
-                users.pop(user)
+def broadcast(message, users_lock, users, sender):
+    with users_lock:
+        for user, data in users.iteritems():
+            if user != sender:
+                try:
+                    data[0].send(sender + ": " + message)
+                except:
+                    data[0].close()
+                    users.pop(user)
 
+###########################################################################
+# main server loop
 def server_loop(ip_addr, port):
     games = {}
     users = {}
+    users_lock = threading.Lock()
+
     game_queue = Queue()
     usr_queue = Queue()
 
     game_loop = threading.Thread(target=init_game_servers,
-                                 args=(games, ip_addr, port, game_queue))
+                                 args=(games, game_queue))
     game_loop.start()
+    game_loop.join()
+    
     user_loop = threading.Thread(target=init_user_loop, 
-                                 args=(games, users, usr_queue))
+                                 args=(games, users, users_lock,
+                                       usr_queue))
     user_loop.start()
     while True:
         if usr_queue.empty():
             continue
         else:
             sender, msg = usr_queue.get()
-            broadcast(msg, users, sender)
+            broadcast(msg, users_lock, users, sender)
 
 def main(args):
     if len(args) != 3:
