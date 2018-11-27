@@ -16,6 +16,8 @@ def init_game_servers(games, game_queue):
     game_set = set(['blackjack', 'roulette', 'baccarat'])
     while len(games) < 3:
         conn, addr = SERVER.accept()
+        print(conn)
+        print(addr)
         print("Accepted game")
         conn.send(json.dumps(['name']))
         name = conn.recv(2048)
@@ -87,8 +89,10 @@ def msg_from_user_to_game(games, game, user, money, betsize, msg):
     if msg not in proper_msg:
         return False
 
+    beton = None # TODO CHANGE BET_ON AND PUT IT AS A PARAM
+    
     game_conn = games[game][0]
-    game_conn.send(json.dumps([msg, user, money, betsize]))
+    game_conn.send(json.dumps([msg, user, money, betsize, beton]))
     return True
 
 def listen_for_game(games, name, conn, game_queue):

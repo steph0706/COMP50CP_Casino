@@ -3,35 +3,10 @@ import sys
 import select
 import threading
 import json
+import room
 
 class Game_manager:
-    global get_name, join_room, remove_user
-
-    def get_name(self, user, money, betsize):
-        print("sending name to server")
-        self.SERVER.send(self.name)
-
-    def join_room(self, user, money, betsize):
-        print("adding user " + user + " to a room")
-        self.users.add(user)
-        #for room in rooms:
-            # add code after rooms have been implemented
-            #if room.cap() < ROOM_CAP:
-            #   room.add(user, money)
-            # return True
-        #new_room = NEW ROOM OBJECT
-        #new_room.add(user, money)
-        #rooms.append(new_room)
-        #return True
-
-    def remove_user(self, user, money, betsize):
-        print("removing user " + user + " from a room")
-        self.users.remove(user)
-        #for room in rooms:
-            # add code after rooms have been implemented
-            # if room.has(user) == True:
-            #   room.remove(user)
-            #   return True
+    global get_name, join_room, remove_user, game_fun
 
     def __init__(self, game):
         print("Making game manager")
@@ -39,7 +14,7 @@ class Game_manager:
         self.users  = set()
         self.rooms  = []
         self.name   = game
-        self.r_cap  = 5
+        self.cap    = 5
         self.MESSAGES = {
             'name'   : get_name,
             'join'   : join_room,
@@ -60,7 +35,37 @@ class Game_manager:
                     user    = message[1] if len(message) > 1 else None
                     money   = message[2] if len(message) > 2 else None
                     betsize = message[3] if len(message) > 3 else None
+                    beton   = message[4] if len(message) > 4 else None
                     fun_name = self.MESSAGES[message[0]]
                     fun_name(self, user, money, betsize)
-
         self.SERVER.close()
+
+    def get_name(self, user, money, betsize):
+        print("sending name to server")
+        self.SERVER.send(self.name)
+
+    def join_room(self, user, money, betsize):
+        print("adding user " + user + " to a room")
+        self.users.add(user)
+        for rm in self.rooms:
+            if rm.size() < self.cap:
+                rm.addToRoom([user, money, betsize])
+                break
+        else:
+            new_room = room.Room(game_fun)
+            new_room.addToRoom([user, money, betsize])
+            self.rooms.append(new_room)
+
+        for rm in self.rooms:
+            rm.printRoom()
+
+    def remove_user(self, user, money, betsize):
+        print("removing user " + user + " from a room")
+        self.users.remove(user)
+        for rm in self.rooms:
+            if rm.hasUser(user):
+                rm.removeUser(user)
+                break
+
+    def game_fun():
+        return True
