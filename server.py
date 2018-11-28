@@ -11,7 +11,7 @@ INIT_MONEY = 1000
 
 ###########################################################################
 # init loop functions
-def init_game_servers(games, game_queue):
+def init_game_servers(games, game_queue, users):
     print("Initializing games")
     game_set = set(['blackjack', 'roulette', 'baccarat'])
     while len(games) < 3:
@@ -26,7 +26,7 @@ def init_game_servers(games, game_queue):
         else:
             games[name] = [conn]
             game_listen = threading.Thread(target=listen_for_game,
-                          args=(games, name, conn, game_queue))
+                          args=(games, name, conn, game_queue, users))
             game_listen.start()
             print(name)
 
@@ -95,9 +95,13 @@ def msg_from_user_to_game(games, game, user, money, betsize, msg):
     game_conn.send(json.dumps([msg, user, money, betsize, beton]))
     return True
 
-def listen_for_game(games, name, conn, game_queue):
+def msg_from_game_to_usr(user, message, users):
+    users[user][0].send(message)
+
+def listen_for_game(games, name, conn, game_queue, users):
     actions = {
-        'users' : print_users
+        # 'users' : print_users,
+        'send'  : msg_from_game_to_usr
         # add more actions later
     }
     while True:
@@ -105,7 +109,7 @@ def listen_for_game(games, name, conn, game_queue):
             message = json.loads(conn.recv(2048))
             if message:
                 action = message[0]
-                actions[action](message[1:])
+                actions[action](message[1], message[2], users)
         except:
             continue
 
@@ -145,7 +149,7 @@ def server_loop(ip_addr, port):
     usr_queue = Queue()
 
     game_loop = threading.Thread(target=init_game_servers,
-                                 args=(games, game_queue))
+                                 args=(games, game_queue, users))
     game_loop.start()
     game_loop.join()
     

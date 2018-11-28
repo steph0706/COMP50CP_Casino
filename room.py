@@ -1,7 +1,7 @@
 import threading
 
 class Room:
-    def __init__(self, game_fun):
+    def __init__(self, game_fun, queue):
         self.roomBusy = False
         
         self.roomLock = threading.Lock()
@@ -13,6 +13,7 @@ class Room:
         self.room = []
         self.max = 5
 
+        self.msgQueue = queue
         self.game_fun = game_fun
 
     def addToRoom(self, user):
@@ -24,13 +25,14 @@ class Room:
                 if len(self.room) >= 2:
                     self.roomReady.notify()
 
-
     def waitForMinPlayers(self):
         with self.roomLock and self.roomReadyLock:
             while len(self.room) < 2:
+                print 'waiting in room'
                 self.roomReady.wait()
             self.roomBusy = True
-            return self.game_fun(self.room)
+            self.game_fun(self.room, self.msgQueue)
+
 
     def doneWithRoom(self):
         with self.roomLock:
