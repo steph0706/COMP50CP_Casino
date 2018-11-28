@@ -3,10 +3,11 @@ import sys
 import select
 import threading
 import json
+<<<<<<< HEAD
 import roulette
 
 class Game_manager:
-    global get_name, join_room, remove_user
+    global get_name, join_room, remove_user, game_fun
 
     def __init__(self, game):
         print("Making game manager")
@@ -26,27 +27,6 @@ class Game_manager:
         print("sending name to server")
         self.SERVER.send(self.name)
 
-    def join_room(self, user, conn, money, betsize, beton):
-        print("adding user " + user + " to a room")
-        self.users.add(user)
-        #for room in rooms:
-            # add code after rooms have been implemented
-            #if room.cap() < ROOM_CAP:
-            #   room.add(user, money)
-            # return True
-        #new_room = NEW ROOM OBJECT
-        #new_room.add(user, money)
-        #rooms.append(new_room)
-        #return True
-
-    def remove_user(self, user, conn, money, betsize, beton):
-        print("removing user " + user + " from a room")
-        self.users.remove(user)
-        #for room in rooms:
-            # add code after rooms have been implemented
-            # if room.has(user) == True:
-            #   room.remove(user)
-            #   return True
 
     def update_bet(self, user, conn, money, betsize, beton)
         for room in rooms:
@@ -73,3 +53,31 @@ class Game_manager:
                     fun_name(self, user, conn, money, betsize, beton)
 
         self.SERVER.close()
+
+
+    def join_room(self, user, conn, money, betsize, beton):
+        print("adding user " + user + " to a room")
+        self.users.add(user)
+        for rm in self.rooms:
+            if rm.size() < self.cap:
+                rm.addToRoom([user, money, betsize])
+                break
+        else:
+            new_room = room.Room(game_fun)
+            new_room.addToRoom([user, money, betsize])
+            self.rooms.append(new_room)
+
+        for rm in self.rooms:
+            rm.printRoom()
+
+    def remove_user(self, user, conn, money, betsize, beton):
+        print("removing user " + user + " from a room")
+        self.users.remove(user)
+        for rm in self.rooms:
+            if rm.hasUser(user):
+                rm.removeUser(user)
+                break
+
+    def game_fun():
+        return True
+

@@ -24,6 +24,7 @@ class Room:
                 if len(self.room) >= 2:
                     self.roomReady.notify()
 
+
     def waitForMinPlayers(self):
         with self.roomLock and self.roomReadyLock:
             while len(self.room) < 2:
@@ -39,12 +40,26 @@ class Room:
     def roomBusy(self):
         return self.roomBusy
 
-    def contains(self, user):
-        with self.roomLock:
-            if user in self.room:
-                return True
-            else:
-                return False
     def size(self):
         with self.roomLock:
-            return len(self.room)
+
+    def hasUser(self, username):
+        with self.roomLock:
+            for idx, user in enumerate(self.room):
+                if username in user:
+                    return idx
+        return ''
+
+    def removeUser(self, username):
+        idx = self.hasUser(username)
+        if idx != '':
+            with self.roomLock:
+                self.room.pop(idx)
+
+    def printRoom(self):
+        print("Room start")
+        for user in self.room:
+            print(user)
+        print("Room end")
+
+
