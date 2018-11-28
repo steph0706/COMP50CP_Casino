@@ -42,6 +42,7 @@ class Room:
 
     def size(self):
         with self.roomLock:
+            return len(self.room)
 
     def hasUser(self, username):
         with self.roomLock:

@@ -1,13 +1,11 @@
-import socket
-import sys
-import select
-import threading
 import json
-<<<<<<< HEAD
-import roulette
+import roulette_server
+import socket
+import select
+import room
 
 class Game_manager:
-    global get_name, join_room, remove_user, game_fun
+    global get_name, join_room, remove_user, game_fun, update_bet
 
     def __init__(self, game):
         print("Making game manager")
@@ -28,10 +26,11 @@ class Game_manager:
         self.SERVER.send(self.name)
 
 
-    def update_bet(self, user, conn, money, betsize, beton)
+    def update_bet(self, user, conn, money, betsize, beton):
         for room in rooms:
             if room.contains(user):
                 # do something
+                x=1
 
     def connect_to_casino(self, ip_addr, port):
         print("Connecting to casino")

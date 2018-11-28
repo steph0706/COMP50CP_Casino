@@ -1,5 +1,5 @@
 BET_MSG = "Place your bets! Before all your bets, please type 'bet' followed " \
-            + "by a space and the following:"
+            + "by a space and the following:" \
             + "Bet on it landing on an even number by typing 'even'\n" \
             + "Bet on an odd number by typing 'odd'\n" \
             + "Bet on it landing on a number between 0 and 12 by typing " \
