@@ -1,6 +1,6 @@
 import threading
 
-class Room():
+class Room:
     def __init__(self, game_fun):
         self.roomBusy = False
         
@@ -39,6 +39,12 @@ class Room():
     def roomBusy(self):
         return self.roomBusy
 
+    def contains(self, user):
+        with self.roomLock:
+            if user in self.room:
+                return True
+            else:
+                return False
     def size(self):
         with self.roomLock:
             return len(self.room)
