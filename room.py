@@ -1,39 +1,38 @@
 import threading
+import time
+from Queue import *
 
 class Room:
-    def __init__(self, game_fun):
-        self.roomBusy = False
-        
+    def __init__(self, game, msgs):
         self.roomLock = threading.Lock()
-        self.roomAvailable = threading.Condition(self.roomLock)
+        self.msgs   = msgs
+        self.bets   = Queue()
+        self.room   = []
+        self.game   = game
+        self.update = 0
+        self.game()
 
-        self.roomReadyLock = threading.Lock()
-        self.roomReady = threading.Condition(self.roomReadyLock)
-
-        self.room = []
-        self.game_fun = game_fun
+        start = threading.Thread(target=Room.waitForMinPlayers, args=(self,))
+        start.start()
 
     def addToRoom(self, user):
-        with self.roomLock:
-            while self.roomBusy:
-                self.roomAvailable.wait()
-            self.room.append(user)
-            with self.roomReadyLock:
-                if len(self.room) >= 2:
-                    self.roomReady.notify()
+        self.roomLock.acquire()
+        self.room.append(user)
+        self.roomLock.release()
 
-    def hasUser(self, username):
-        with self.roomLock:
-            for idx, user in enumerate(self.room):
-                if username in user:
-                    return idx
-        return ''
+    def updateMoney(self, user, new_money):
+        for u in self.room:
+            if u[0] == user:
+                u[1] = new_money
+                break
 
     def removeUser(self, username):
-        idx = self.hasUser(username)
-        if idx != '':
-            with self.roomLock:
-                self.room.pop(idx)
+        user_to_remove = []
+        for user in self.room:
+            if user[0] == username:
+                user_to_remove = user
+                break
+        self.room.remove(user_to_remove)
 
     def printRoom(self):
         print("Room start")
@@ -41,21 +40,49 @@ class Room:
             print(user)
         print("Room end")
 
+    # execute game once number of players >= 2
     def waitForMinPlayers(self):
-        with self.roomLock and self.roomReadyLock:
-            while len(self.room) < 2:
-                self.roomReady.wait()
-            self.roomBusy = True
-            return self.game_fun(self.room)
+        while True:
+            time.sleep(0.01)
+            if len(self.room) < 2:
+                continue
+            else:
+                self.roomLock.acquire()
+                self.printRoom() # debugging print to see who's in room
 
-    def doneWithRoom(self):
-        with self.roomLock:
-            self.roomBusy = False
-            self.roomAvailable.notify()
+                curr_game = self.game()
 
-    def roomBusy(self):
-        return self.roomBusy
+                # loops thru players so everyone can place bet
+                for user in self.room:
+                    bet_msg, possible_bet = curr_game.bet_message()
 
-    def size(self):
-        with self.roomLock:
-            return len(self.room)
+                    # put bet message in specified format on queue
+                    self.msgs.put(['bet', user[0], user[1], 
+                                    bet_msg, possible_bet])
+                    user_bet = self.getBet()
+                    curr_game.bet(user_bet[0], user_bet[1], user_bet[2])
+
+                result = curr_game.play()
+                self.msgs.put(['result', result])
+                self.getUpdate()
+                self.roomLock.release()
+
+    # puts bet on bet queue
+    def setBet(self, bet):
+        self.bets.put(bet)
+
+    # loops until something is on bet queue, then pop it off and return
+    def getBet(self):
+        while self.bets.empty():
+            pass
+        return self.bets.get()
+
+    # increment update count
+    def setUpdate(self):
+        self.update += 1
+
+    # loops until all players in room has updated then return
+    def getUpdate(self):
+        while self.update < len(self.room):
+            pass
+        self.update = 0
