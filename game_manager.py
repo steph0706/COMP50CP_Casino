@@ -6,6 +6,8 @@ import json
 import room
 import time
 import generic_game
+import blackjack
+import roulette
 from Queue import *
 
 class Game_manager:
@@ -30,8 +32,8 @@ class Game_manager:
 
         # edit this mapping once the games are implemented
         self.game_map = {
-            'blackjack' : generic_game.gen_game,
-            'roulette'  : generic_game.gen_game,
+            'blackjack' : blackjack.blackjack,
+            'roulette'  : roulette.roulette,
             'baccarat'  : generic_game.gen_game
         }
 

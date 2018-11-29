@@ -10,7 +10,7 @@ import game_server
 SERVER = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 SERVER.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 INIT_MONEY = 1000
-NUM_GAMES = 2 # edit this to change number of games needed to connect before
+NUM_GAMES = 1 # edit this to change number of games needed to connect before
               # users can start connecting
 BUFF_SIZE = 4096
 
@@ -209,7 +209,9 @@ def broadcast_result(details, users):
         message = " won " if p[1] >= 0 else " lost "
         msg_on_screen = "You" + str(message) + str(abs(p[1])) \
                     + ". Your total is now " + str(users[p[0]][1])
+
         try:
+            print "sending result"
             print(json.dumps(['result', p[0], msg_on_screen, 
                             users[p[0]][1], details[-1]])) # debug print
             users[p[0]][0].send(json.dumps(['result', p[0], msg_on_screen,
