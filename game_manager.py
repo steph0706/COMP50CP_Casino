@@ -27,7 +27,8 @@ class Game_manager:
             'join'    : Game_manager.join_room,
             'bet'     : Game_manager.handle_bet,
             'continue': Game_manager.update_money,
-            'quit'    : Game_manager.remove_user
+            'quit'    : Game_manager.remove_user,
+            'bjack-move'    : Game_manager.blackjack_move
         }
 
         # edit this mapping once the games are implemented
@@ -112,6 +113,11 @@ class Game_manager:
         print("sending name to server")
         self.self_lock.acquire()
         self.SERVER.send(self.name)
+        self.self_lock.release()
+
+    def blackjack_move(self, user, move, betsize, beton):
+        self.self_lock.acquire()
+        self.rooms[self.users[user]][0].blackjackMove([user, move])
         self.self_lock.release()
 
     # when adding user to room, increment the size of the room in self.rooms

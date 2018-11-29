@@ -62,7 +62,7 @@ class Room:
                     user_bet = self.getBet()
                     curr_game.bet(user_bet[0], user_bet[1], user_bet[2])
 
-                result = curr_game.play()
+                result = curr_game.play(self.msgs)
                 self.msgs.put(['result', result])
                 self.getUpdate()
                 self.roomLock.release()
@@ -76,6 +76,12 @@ class Room:
         while self.bets.empty():
             pass
         return self.bets.get()
+
+
+    def blackjackMove(self, user, move):
+        print user
+        print move
+        x =1 
 
     # increment update count
     def setUpdate(self):

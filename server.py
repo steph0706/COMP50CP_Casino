@@ -126,7 +126,8 @@ def init_user_loop(games, users, users_lock, usr_queue):
 ###########################################################################
 # message sending functions
 def msg_from_user_to_game(users, users_lock, games, game, message):
-    proper_msg = set(['join', 'bet', 'continue', 'switch', 'quit'])
+    proper_msg = set(['join', 'bet', 'continue', 'switch', 'quit', \
+        'bjack-move'])
     if message[0] not in proper_msg:
         print("Invalid message")
         return
@@ -146,7 +147,6 @@ def msg_from_user_to_game(users, users_lock, games, game, message):
         users[message[1]][2] = game
         users_lock.release()
         return
-
     print(message) # debug print
     print(type(message)) # debug print
     print("Sending message to " + str(games[game][0])) # debug print
@@ -155,9 +155,10 @@ def msg_from_user_to_game(users, users_lock, games, game, message):
 # listen for messages from game and take appropriate action
 def listen_for_game(games, name, conn, game_queue, users):
     actions = {
-        'users'  : print_users,
-        'bet'    : ask_for_bet,
-        'result' : broadcast_result
+        'users'      : print_users,
+        'bet'        : ask_for_bet,
+        'result'     : broadcast_result,
+        'bjack-deal' : blackjack_deal,
     }
 
     # continuously receives messages from game
@@ -199,6 +200,12 @@ def ask_for_bet(details, users):
     except:
         users[details[0]][0].close()
         users.pop(details[0])
+
+def blackjack_deal(details, users):
+    user = details[0]
+    cards = details[3]
+    users[user][0].send(json.dumps(['bjack-cards', cards, user]))
+
 
 def broadcast_result(details, users):
     participants = details[0][0] + details[0][1]

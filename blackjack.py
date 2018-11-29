@@ -3,25 +3,30 @@ import deck
 class blackjack:
     def __init__(self):
         self.users = {}
+        self.deck = deck.deck()
 
     def bet(self, user, betsize, beton):
         self.users[user] = [betsize, beton]
 
     def bet_message(self):
-        return "Place your bets! Minimum bet of 2, maximum 500.\n", \
-            [str(i) for i in range(2, 501)]
+        return "blackjack", \
+            ["blackjack"]
 
     def play(self, msgs):
         winners = []
         losers = []
         # msgs.put()
-        cards = deck.deck()
-        for user, bet in users:
-            card1 = cards.draw_card()
-            card2 = cards.draw_card()
-            msgs.put(['blackjack', user, None, None, [card1, card2]])
+        for user, bet in self.users.iteritems():
+            card1 = self.deck.draw_card()
+            card2 = self.deck.draw_card()
+            print card1
+            print card2
+            msgs.put(['bjack-deal', user, None, None, [card1, card2]])
 
         return [winners, losers]
+    
+    def hit(self, msgs):
+        x=1
 
     def reset(self):
         self.users = {}
