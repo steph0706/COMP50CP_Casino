@@ -23,12 +23,12 @@ class Game_manager:
         self.room_msgs = Queue()
         self.self_lock = threading.Lock()
         self.MESSAGES  = {
-            'name'    : Game_manager.get_name,
-            'join'    : Game_manager.join_room,
-            'bet'     : Game_manager.handle_bet,
-            'continue': Game_manager.update_money,
-            'quit'    : Game_manager.remove_user,
-            'bjack-move'    : Game_manager.blackjack_move
+            'name'          : Game_manager.get_name,
+            'join'          : Game_manager.join_room,
+            'bet'           : Game_manager.handle_bet,
+            'continue'      : Game_manager.update_money,
+            'quit'          : Game_manager.remove_user,
+            'bjack-move'    : Game_manager.blackjack_move,
         }
 
         # edit this mapping once the games are implemented
@@ -117,7 +117,7 @@ class Game_manager:
 
     def blackjack_move(self, user, move, betsize, beton):
         self.self_lock.acquire()
-        self.rooms[self.users[user]][0].blackjackMove([user, move])
+        self.rooms[self.users[user]][0].blackjackMove(user, move)
         self.self_lock.release()
 
     # when adding user to room, increment the size of the room in self.rooms

@@ -109,7 +109,8 @@ def init_user_loop(games, users, users_lock, usr_queue):
             except:
                 continue
 
-        # send message to game_manager to let user join room
+        # send message to game_manager to let user join 
+
         msg_from_user_to_game(users, users_lock, games, game, \
                         ['join', name, users[name][1], None, None])
 
@@ -159,6 +160,7 @@ def listen_for_game(games, name, conn, game_queue, users):
         'bet'        : ask_for_bet,
         'result'     : broadcast_result,
         'bjack-deal' : blackjack_deal,
+        'bjack-hit'  : blackjack_hit,
     }
 
     # continuously receives messages from game
@@ -206,6 +208,11 @@ def blackjack_deal(details, users):
     cards = details[3]
     users[user][0].send(json.dumps(['bjack-cards', cards, user]))
 
+def blackjack_hit(details, users):
+    user = detalis[0]
+    card = details[3]
+    print "hitting blackjack"
+    users[user][0].send(json.dumps(['bjack-hit', card, user]))
 
 def broadcast_result(details, users):
     participants = details[0][0] + details[0][1]

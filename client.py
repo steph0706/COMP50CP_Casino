@@ -17,7 +17,8 @@ def main(args):
         'game'        : insert_preference,
         'bet'         : handle_bet,
         'result'      : handle_result,
-        'bjack-cards' : handle_bjack
+        'bjack-cards' : handle_bjack,
+        'bjack-hit'   : handle_hit,
     }
 
     print("connected to server")
@@ -70,6 +71,14 @@ def handle_bjack(details, server):
         + " and " + cards[1][0] + " of " + cards[1][1] + "\n" \
         + "Hit or Stand?\n"
     
+    move = try_to_get_input(msg)
+    server.send(json.dumps(['bjack-move', details[1], move, 'blackjack']))
+
+def handle_hit(details, server):
+    card = details[0]
+    print "handling hit"
+    msg = "Here's your next card: " + card[0] + " of " + card[1] + "\n" \
+        + "Hit or Stand?\n"
     move = try_to_get_input(msg)
     server.send(json.dumps(['bjack-move', details[1], move, 'blackjack']))
 

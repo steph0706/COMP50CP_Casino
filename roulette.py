@@ -33,7 +33,7 @@ class roulette:
         except:
             return False
 
-    def play(self):
+    def play(self, msgs):
         winners = []
         losers  = []
         landon = random.randint(0, 36)

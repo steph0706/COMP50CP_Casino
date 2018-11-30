@@ -10,6 +10,7 @@ class Room:
         self.room   = []
         self.game   = game
         self.update = 0
+        self.curr_game = None
         self.game()
 
         start = threading.Thread(target=Room.waitForMinPlayers, args=(self,))
@@ -51,6 +52,7 @@ class Room:
                 self.printRoom() # debugging print to see who's in room
 
                 curr_game = self.game()
+                self.curr_game = curr_game
 
                 # loops thru players so everyone can place bet
                 for user in self.room:
@@ -79,9 +81,11 @@ class Room:
 
 
     def blackjackMove(self, user, move):
-        print user
-        print move
-        x =1 
+        if move == 'hit':
+            self.curr_game.start_hit(user)
+        else:
+            self.curr_game.stop_hit(user)
+
 
     # increment update count
     def setUpdate(self):
