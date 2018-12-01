@@ -16,13 +16,17 @@ class Room:
         start = threading.Thread(target=Room.waitForMinPlayers, args=(self,))
         start.start()
 
+
+    def waitingMsg(self, user):
+        if len(self.room) < 2:
+            self.msgs.put(['wait', user[0], 
+                'Waiting for more users to join the room'])
+    
     def addToRoom(self, user):
         self.roomLock.acquire()
         self.room.append(user)
         self.roomLock.release()
-        if len(self.room) < 2:
-            self.msgs.put(['wait', user[0], 
-                'Waiting for more users to join the room'])
+        self.waitingMsg(user)
 
     def updateMoney(self, user, new_money):
         for u in self.room:

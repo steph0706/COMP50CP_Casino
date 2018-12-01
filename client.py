@@ -127,6 +127,7 @@ def handle_result(details, server):
     if str(ans) == 'yes':
         command = 'continue'
         ans = details[-1]
+        print "Waiting for more users to join the room"
     elif str(ans) == 'no':
         ans = try_to_get_input("Which game do you want to play now? Please" \
                 + " enter blackjack, roulette, or baccarat. If you want to" \
