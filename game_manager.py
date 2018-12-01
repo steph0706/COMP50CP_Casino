@@ -81,8 +81,9 @@ class Game_manager:
                         fun_name = self.MESSAGES[message[0]]
                         self.self_lock.release()
                         fun_name(self, user, money, betsize, beton)
-                    except:
+                    except Exception, e:
                         print("Exception caught")
+                        print str(e)
                         print(message)
                         print(type(message))
                         self.self_lock.release()

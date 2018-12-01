@@ -209,19 +209,20 @@ def blackjack_deal(details, users):
     users[user][0].send(json.dumps(['bjack-cards', cards, user]))
 
 def blackjack_hit(details, users):
-    user = detalis[0]
+    user = details[0]
     card = details[3]
-    print "hitting blackjack"
     users[user][0].send(json.dumps(['bjack-hit', card, user]))
 
 def broadcast_result(details, users):
     participants = details[0][0] + details[0][1]
     print("participants: " + json.dumps(participants))
-
+    print "PRINTING RESULTS"
+    msg = details[0][2]
+    print msg
     for p in participants:
         users[p[0]][1] += int(p[1])
         message = " won " if p[1] >= 0 else " lost "
-        msg_on_screen = "You" + str(message) + str(abs(p[1])) \
+        msg_on_screen = msg + "You" + str(message) + str(abs(p[1])) \
                     + ". Your total is now " + str(users[p[0]][1])
 
         try:

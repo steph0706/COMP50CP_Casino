@@ -76,7 +76,6 @@ def handle_bjack(details, server):
 
 def handle_hit(details, server):
     card = details[0]
-    print "handling hit"
     msg = "Here's your next card: " + card[0] + " of " + card[1] + "\n" \
         + "Hit or Stand?\n"
     move = try_to_get_input(msg)
