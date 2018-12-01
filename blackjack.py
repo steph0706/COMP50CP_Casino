@@ -58,6 +58,13 @@ class blackjack:
                 if value == 'A':
                     value = 11
                 total += int(value)
+
+            
+            for card in cards:
+                value = card[0]
+                if total > 21 and value == 'A':
+                    total -= 10
+
             if total > 21:
                 losers.append((user, -bet[0]))
             elif self.checkForNatural(cards):
@@ -108,7 +115,7 @@ class blackjack:
             total += int(value)
 
         if total > 21:
-            return -1, msg[:-2]
+            return -1, msg[:-2] + "\n"
         return total, msg[:-2] + "\n"
 
     def stop_hit(self, user):
