@@ -158,6 +158,7 @@ def listen_for_game(games, name, conn, game_queue, users):
     actions = {
         'users'      : print_users,
         'bet'        : ask_for_bet,
+        'wait'       : print_a_message,
         'result'     : broadcast_result,
         'bjack-deal' : blackjack_deal,
         'bjack-hit'  : blackjack_hit,
@@ -212,6 +213,15 @@ def blackjack_hit(details, users):
     user = details[0]
     card = details[3]
     users[user][0].send(json.dumps(['bjack-hit', card, user]))
+
+def print_a_message(details, users):
+    print("sending printed message to " + str(users[details[0]][0]))
+    try:
+        users[details[0]][0].send(json.dumps(['print'] + details))
+    except:
+        print("can't send printed instruction")
+        users[details[0]][0].close()
+        users.pop(details[0])
 
 def broadcast_result(details, users):
     participants = details[0][0] + details[0][1]

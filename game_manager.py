@@ -156,6 +156,7 @@ class Game_manager:
         self.rooms[self.users[user]][0].setBet([user, betsize, beton])
         self.self_lock.release()
 
+
     # update money by changing money of user in room
     # and then increment the number of users updated using setUpdate()
     def update_money(self, user, money, betsize, beton):

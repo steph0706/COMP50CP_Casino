@@ -20,6 +20,9 @@ class Room:
         self.roomLock.acquire()
         self.room.append(user)
         self.roomLock.release()
+        if len(self.room) < 2:
+            self.msgs.put(['wait', user[0], 
+                'Waiting for more users to join room'])
 
     def updateMoney(self, user, new_money):
         for u in self.room:
@@ -61,6 +64,12 @@ class Room:
                     # put bet message in specified format on queue
                     self.msgs.put(['bet', user[0], user[1], 
                                     bet_msg, possible_bet])
+
+                    for otherUser in self.room:
+                        if otherUser != user:
+                            self.msgs.put(['wait', otherUser[0], 'Waiting for '\
+                                + user[0] + " to bet"])
+                        
                     user_bet = self.getBet()
                     curr_game.bet(user_bet[0], user_bet[1], user_bet[2])
 

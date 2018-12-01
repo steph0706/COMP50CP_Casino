@@ -16,6 +16,7 @@ def main(args):
         'name'        : insert_preference,
         'game'        : insert_preference,
         'bet'         : handle_bet,
+        'print'       : print_a_message,
         'result'      : handle_result,
         'bjack-cards' : handle_bjack,
         'bjack-hit'   : handle_hit,
@@ -110,6 +111,9 @@ def handle_bet(details, server):
 
     message = ['bet', details[0], details[1], betsize, beton, details[-1]]
     server.send(json.dumps(message))
+
+def print_a_message(details, server):
+    print(details[1])
 
 def handle_result(details, server):
 
