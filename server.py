@@ -136,7 +136,7 @@ def msg_from_user_to_game(users, users_lock, games, game, message):
     # a 'switch' command is converted to quitting the game the user
     # is in, and joining a different game
     if message[0] == 'switch':
-        message_quit = ['quit'] + message[1:]
+        message_quit = ['quit-game'] + message[1:]
         message_join = ['join'] + message[1:]
 
         # send quit and join to appropriate game_managers
@@ -148,6 +148,12 @@ def msg_from_user_to_game(users, users_lock, games, game, message):
         users[message[1]][2] = game
         users_lock.release()
         return
+    if message[0] == 'quit':
+        users_lock.acquire()
+        print message[1] + " quitting"
+        users.pop(message[1])
+        users_lock.release()
+
     print(message) # debug print
     print(type(message)) # debug print
     print("Sending message to " + str(games[game][0])) # debug print

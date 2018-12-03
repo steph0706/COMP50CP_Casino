@@ -28,6 +28,7 @@ class Game_manager:
             'bet'           : Game_manager.handle_bet,
             'continue'      : Game_manager.update_money,
             'quit'          : Game_manager.remove_user,
+            'quit-game'     : Game_manager.remove_user,
             'bjack-move'    : Game_manager.blackjack_move,
         }
 

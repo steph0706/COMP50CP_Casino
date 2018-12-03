@@ -24,9 +24,8 @@ def main(args):
 
     print("connected to server")
 
-    loop = 0
-    while True:
-        loop += 1
+    loop = True
+    while loop:
         # print("start loop " + str(loop))
         read_sockets, _, _ = select.select([SERVER], [], [], 0.01)
         for socks in read_sockets:
@@ -39,7 +38,7 @@ def main(args):
                     message = json.loads(message)
                     action = message[0]
                     details = message[1:]
-                    actions[action](details, SERVER)
+                    loop = actions[action](details, SERVER)
                 except:
                     message = message
                     # print("message from server loop exception " \
@@ -65,6 +64,7 @@ def insert_preference(details, server):
     reply = sys.stdin.readline()
     server.send(reply)
     sys.stdout.flush()
+    return True
 
 def handle_bjack(details, server):
     cards = details[0]
@@ -74,6 +74,7 @@ def handle_bjack(details, server):
     
     move = try_to_get_input(msg)
     server.send(json.dumps(['bjack-move', details[1], move, 'blackjack']))
+    return True
 
 def handle_hit(details, server):
     card = details[0]
@@ -81,6 +82,7 @@ def handle_hit(details, server):
         + "Hit or Stand?\n"
     move = try_to_get_input(msg)
     server.send(json.dumps(['bjack-move', details[1], move, 'blackjack']))
+    return True
 
 def handle_bet(details, server):
     betsize = try_to_get_input("How much do you want to bet? Note: " \
@@ -111,9 +113,11 @@ def handle_bet(details, server):
 
     message = ['bet', details[0], details[1], betsize, beton, details[-1]]
     server.send(json.dumps(message))
+    return True
 
 def print_a_message(details, server):
     print(details[1])
+    return True
 
 def handle_result(details, server):
 
@@ -146,6 +150,12 @@ def handle_result(details, server):
 
     message = [command, details[0], details[2], ans]
     server.send(json.dumps(message))
+    if command == 'quit':
+        # server.close()
+        print "QUITTING"
+        return False
+    return True
 
+    
 if __name__ == '__main__':
     main(sys.argv)

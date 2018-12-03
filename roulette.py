@@ -87,7 +87,7 @@ class roulette:
                 else:
                     losers.append((user, -bet[0]))
 
-        return [winners, losers, "The result was " + landon]
+        return [winners, losers, "The result was " + str(landon) + "\n"]
 
     def reset(self):
         self.users = {}
