@@ -73,6 +73,8 @@ def handle_bjack(details, server):
         + "Hit or Stand?\n"
     
     move = try_to_get_input(msg)
+    if move == 'stand':
+        print "Waiting for other users to finish betting"
     server.send(json.dumps(['bjack-move', details[1], move, 'blackjack']))
     return True
 
@@ -81,10 +83,17 @@ def handle_hit(details, server):
     msg = "Here's your next card: " + card[0] + " of " + card[1] + "\n" \
         + "Hit or Stand?\n"
     move = try_to_get_input(msg)
+    if move == 'stand':
+        print "Waiting for other users to finish betting"
     server.send(json.dumps(['bjack-move', details[1], move, 'blackjack']))
     return True
 
 def handle_bet(details, server):
+    if details[1] <= 0:
+        print("You have no money left. Quitting casino.")
+        message = ['quit', details[0], details[1], 'quit']
+        server.send(json.dumps(message))
+        return False
     betsize = try_to_get_input("How much do you want to bet? Note: " \
                             + "your total money is " + str(details[1]) + '\n')
 
@@ -93,7 +102,8 @@ def handle_bet(details, server):
         try:
             betsize = int(betsize)
         except:
-            betsize = try_to_get_input("Not a number. Please insert a number.\n")
+            betsize = try_to_get_input("Not a number. Please insert a number.\
+                \n")
             continue
 
         if int(betsize) > int(details[1]) or int(betsize) <= 0:
@@ -151,11 +161,10 @@ def handle_result(details, server):
     message = [command, details[0], details[2], ans]
     server.send(json.dumps(message))
     if command == 'quit':
-        # server.close()
-        print "QUITTING"
+        server.close()
         return False
     return True
 
-    
+
 if __name__ == '__main__':
     main(sys.argv)

@@ -108,13 +108,13 @@ class Game_manager:
             if not self.room_msgs.empty():
                 message = self.room_msgs.get()
                 print(message) # debugging print to see message
-                self.SERVER.send(json.dumps(message + [self.name]))
+                self.SERVER.send(json.dumps(message + [self.name]) + "\0")
             self.self_lock.release()
 
     def get_name(self, user, money, betsize, beton):
         print("sending name to server")
         self.self_lock.acquire()
-        self.SERVER.send(self.name)
+        self.SERVER.send(self.name + "\0")
         self.self_lock.release()
 
     def blackjack_move(self, user, move, betsize, beton):
@@ -153,7 +153,9 @@ class Game_manager:
 
     # each user sets the bet they made according to the specified game
     def handle_bet(self, user, money, betsize, beton):
+        print "handle bet"
         self.self_lock.acquire()
+        print "lock acquired"
         self.rooms[self.users[user]][0].setBet([user, betsize, beton])
         self.self_lock.release()
 

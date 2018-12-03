@@ -31,7 +31,7 @@ def init_game_servers(games, game_queue, users):
 
         # request game name by sending it to game_manager
         conn.send(json.dumps(['name']))
-        name = conn.recv(BUFF_SIZE)
+        name = conn.recv(BUFF_SIZE)[:-1]
 
         # if game is recognized, add to the game dict
         if name not in game_set:
@@ -173,11 +173,15 @@ def listen_for_game(games, name, conn, game_queue, users):
     # continuously receives messages from game
     while True:
         try:
-            message = json.loads(conn.recv(BUFF_SIZE))
-            if message:
-                print("Message from game: " + json.dumps(message))
-                actions[message[0]](message[1:], users)
-        except:
+            messages = conn.recv(BUFF_SIZE).split("\0")
+            for m in messages[:-1]:
+                message = json.loads(m)
+                if message:
+                    print("Message from game: " + json.dumps(message))
+                    actions[message[0]](message[1:], users)
+        except Exception, e :
+            print str(e)
+            print 'didnt get message'
             continue
 
 # listen for messages from user and adds to usr_queue
