@@ -146,6 +146,9 @@ def handle_result(details, server):
 
     message = [command, details[0], details[2], ans]
     server.send(json.dumps(message))
+    if command == 'quit':
+        server.close()
+        exit(1)
 
 if __name__ == '__main__':
     main(sys.argv)
