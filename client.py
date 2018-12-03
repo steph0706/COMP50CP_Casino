@@ -13,10 +13,13 @@ def main(args):
 
     SERVER.connect((ip_addr, port))
     actions = {
-        'name'   : insert_preference,
-        'game'   : insert_preference,
-        'bet'    : handle_bet,
-        'result' : handle_result
+        'name'        : insert_preference,
+        'game'        : insert_preference,
+        'bet'         : handle_bet,
+        'print'       : print_a_message,
+        'result'      : handle_result,
+        'bjack-cards' : handle_bjack,
+        'bjack-hit'   : handle_hit,
     }
 
     print("connected to server")
@@ -45,6 +48,8 @@ def main(args):
 
 # try until an input is given from stdin
 def try_to_get_input(message):
+    if message == 'blackjack\n':
+        return "blackjack"
     user_input = ''
     while user_input == '':
         try:
@@ -53,13 +58,29 @@ def try_to_get_input(message):
             user_input = ''
             pass
 
-    return user_input
+    return user_input.lower()
 
 def insert_preference(details, server):
     print(details[0])
     reply = sys.stdin.readline()
     server.send(reply)
     sys.stdout.flush()
+
+def handle_bjack(details, server):
+    cards = details[0]
+    msg = "Here are your cards: " + cards[0][0] + " of " + cards[0][1] \
+        + " and " + cards[1][0] + " of " + cards[1][1] + "\n" \
+        + "Hit or Stand?\n"
+    
+    move = try_to_get_input(msg)
+    server.send(json.dumps(['bjack-move', details[1], move, 'blackjack']))
+
+def handle_hit(details, server):
+    card = details[0]
+    msg = "Here's your next card: " + card[0] + " of " + card[1] + "\n" \
+        + "Hit or Stand?\n"
+    move = try_to_get_input(msg)
+    server.send(json.dumps(['bjack-move', details[1], move, 'blackjack']))
 
 def handle_bet(details, server):
     betsize = try_to_get_input("How much do you want to bet? Note: " \
@@ -91,6 +112,9 @@ def handle_bet(details, server):
     message = ['bet', details[0], details[1], betsize, beton, details[-1]]
     server.send(json.dumps(message))
 
+def print_a_message(details, server):
+    print(details[1])
+
 def handle_result(details, server):
 
     # checks whether input is yes/no
@@ -103,6 +127,7 @@ def handle_result(details, server):
     if str(ans) == 'yes':
         command = 'continue'
         ans = details[-1]
+        print "Waiting for more users to join the room"
     elif str(ans) == 'no':
         ans = try_to_get_input("Which game do you want to play now? Please" \
                 + " enter blackjack, roulette, or baccarat. If you want to" \

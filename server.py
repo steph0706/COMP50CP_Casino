@@ -10,7 +10,7 @@ import game_server
 SERVER = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 SERVER.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 INIT_MONEY = 1000
-NUM_GAMES = 2 # edit this to change number of games needed to connect before
+NUM_GAMES = 1 # edit this to change number of games needed to connect before
               # users can start connecting
 BUFF_SIZE = 4096
 
@@ -109,7 +109,8 @@ def init_user_loop(games, users, users_lock, usr_queue):
             except:
                 continue
 
-        # send message to game_manager to let user join room
+        # send message to game_manager to let user join 
+
         msg_from_user_to_game(users, users_lock, games, game, \
                         ['join', name, users[name][1], None, None])
 
@@ -126,7 +127,8 @@ def init_user_loop(games, users, users_lock, usr_queue):
 ###########################################################################
 # message sending functions
 def msg_from_user_to_game(users, users_lock, games, game, message):
-    proper_msg = set(['join', 'bet', 'continue', 'switch', 'quit'])
+    proper_msg = set(['join', 'bet', 'continue', 'switch', 'quit', \
+        'bjack-move'])
     if message[0] not in proper_msg:
         print("Invalid message")
         return
@@ -146,7 +148,6 @@ def msg_from_user_to_game(users, users_lock, games, game, message):
         users[message[1]][2] = game
         users_lock.release()
         return
-
     print(message) # debug print
     print(type(message)) # debug print
     print("Sending message to " + str(games[game][0])) # debug print
@@ -155,9 +156,12 @@ def msg_from_user_to_game(users, users_lock, games, game, message):
 # listen for messages from game and take appropriate action
 def listen_for_game(games, name, conn, game_queue, users):
     actions = {
-        'users'  : print_users,
-        'bet'    : ask_for_bet,
-        'result' : broadcast_result
+        'users'      : print_users,
+        'bet'        : ask_for_bet,
+        'wait'       : print_a_message,
+        'result'     : broadcast_result,
+        'bjack-deal' : blackjack_deal,
+        'bjack-hit'  : blackjack_hit,
     }
 
     # continuously receives messages from game
@@ -200,16 +204,39 @@ def ask_for_bet(details, users):
         users[details[0]][0].close()
         users.pop(details[0])
 
+def blackjack_deal(details, users):
+    user = details[0]
+    cards = details[3]
+    users[user][0].send(json.dumps(['bjack-cards', cards, user]))
+
+def blackjack_hit(details, users):
+    user = details[0]
+    card = details[3]
+    users[user][0].send(json.dumps(['bjack-hit', card, user]))
+
+def print_a_message(details, users):
+    print("sending printed message to " + str(users[details[0]][0]))
+    try:
+        users[details[0]][0].send(json.dumps(['print'] + details))
+    except:
+        print("can't send printed instruction")
+        users[details[0]][0].close()
+        users.pop(details[0])
+
 def broadcast_result(details, users):
     participants = details[0][0] + details[0][1]
     print("participants: " + json.dumps(participants))
-
+    print "PRINTING RESULTS"
+    msg = details[0][2]
+    print msg
     for p in participants:
         users[p[0]][1] += int(p[1])
         message = " won " if p[1] >= 0 else " lost "
-        msg_on_screen = "You" + str(message) + str(abs(p[1])) \
+        msg_on_screen = msg + "You" + str(message) + str(abs(p[1])) \
                     + ". Your total is now " + str(users[p[0]][1])
+
         try:
+            print "sending result"
             print(json.dumps(['result', p[0], msg_on_screen, 
                             users[p[0]][1], details[-1]])) # debug print
             users[p[0]][0].send(json.dumps(['result', p[0], msg_on_screen,

@@ -5,7 +5,7 @@ class deck:
     def __init__(self):
         random.seed(time.time())
         self.deck = [(str(val), suit) for val in xrange(1, 14) \
-               for suit in ['heart', 'diamond','club', 'spade']]
+               for suit in ['Hearts', 'Diamonds','Clubs', 'Spades']]
 
         for i in xrange(len(self.deck)):
             if self.deck[i][0] == '1':

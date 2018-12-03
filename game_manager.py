@@ -6,6 +6,9 @@ import json
 import room
 import time
 import generic_game
+import blackjack
+import roulette
+import baccarat
 from Queue import *
 
 class Game_manager:
@@ -21,18 +24,19 @@ class Game_manager:
         self.room_msgs = Queue()
         self.self_lock = threading.Lock()
         self.MESSAGES  = {
-            'name'    : Game_manager.get_name,
-            'join'    : Game_manager.join_room,
-            'bet'     : Game_manager.handle_bet,
-            'continue': Game_manager.update_money,
-            'quit'    : Game_manager.remove_user
+            'name'          : Game_manager.get_name,
+            'join'          : Game_manager.join_room,
+            'bet'           : Game_manager.handle_bet,
+            'continue'      : Game_manager.update_money,
+            'quit'          : Game_manager.remove_user,
+            'bjack-move'    : Game_manager.blackjack_move,
         }
 
         # edit this mapping once the games are implemented
         self.game_map = {
-            'blackjack' : generic_game.gen_game,
-            'roulette'  : generic_game.gen_game,
-            'baccarat'  : generic_game.gen_game
+            'blackjack' : blackjack.blackjack,
+            'roulette'  : roulette.roulette,
+            'baccarat'  : baccarat.baccarat
         }
 
     def connect_to_casino(self, ip_addr, port):
@@ -78,8 +82,9 @@ class Game_manager:
                         fun_name = self.MESSAGES[message[0]]
                         self.self_lock.release()
                         fun_name(self, user, money, betsize, beton)
-                    except:
+                    except Exception, e:
                         print("Exception caught")
+                        print str(e)
                         print(message)
                         print(type(message))
                         self.self_lock.release()
@@ -110,6 +115,11 @@ class Game_manager:
         print("sending name to server")
         self.self_lock.acquire()
         self.SERVER.send(self.name)
+        self.self_lock.release()
+
+    def blackjack_move(self, user, move, betsize, beton):
+        self.self_lock.acquire()
+        self.rooms[self.users[user]][0].blackjackMove(user, move)
         self.self_lock.release()
 
     # when adding user to room, increment the size of the room in self.rooms
@@ -146,6 +156,7 @@ class Game_manager:
         self.self_lock.acquire()
         self.rooms[self.users[user]][0].setBet([user, betsize, beton])
         self.self_lock.release()
+
 
     # update money by changing money of user in room
     # and then increment the number of users updated using setUpdate()
