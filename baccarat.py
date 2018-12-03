@@ -73,7 +73,7 @@ class baccarat:
 			banker_total, banker_cards = self.banker_draw(banker_total, banker_cards)
 		elif banker_total == 4 and player_draw in range(2,8):
 			banker_total, banker_cards = self.banker_draw(banker_total, banker_cards)
-		elif banker_total == 5 and player_draw in range(4.8):
+		elif banker_total == 5 and player_draw in range(4,8):
 			banker_total, banker_cards = self.banker_draw(banker_total, banker_cards)
 		elif banker_total == 6 and player_draw in range(6,8):
 			banker_total, banker_cards = self.banker_draw(banker_total, banker_cards)
