@@ -4,44 +4,63 @@ import threading
 import json
 from Queue import *
 import game_server
+###########################################################################
+# globals defined
 
 SERVER = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 SERVER.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 INIT_MONEY = 1000
+NUM_GAMES = 1 # edit this to change number of games needed to connect before
+              # users can start connecting
+BUFF_SIZE = 4096
 
 ###########################################################################
 # init loop functions
 def init_game_servers(games, game_queue, users):
     print("Initializing games")
     game_set = set(['blackjack', 'roulette', 'baccarat'])
-    while len(games) < 1:
+
+    # accept recognized games
+    while len(games) < NUM_GAMES:
         conn, addr = SERVER.accept()
+
+        # debug prints
         print(conn)
         print(addr)
         print("Accepted game")
+
+        # request game name by sending it to game_manager
         conn.send(json.dumps(['name']))
-        name = conn.recv(4096)
+        name = conn.recv(BUFF_SIZE)[:-1]
+
+        # if game is recognized, add to the game dict
         if name not in game_set:
             sys.stderr.write("Unrecognized game")
         else:
             games[name] = [conn]
+
+            # start game_listen thread for each game
             game_listen = threading.Thread(target=listen_for_game,
                           args=(games, name, conn, game_queue, users))
             game_listen.start()
-            print(name)
+            print(name) # debug print
 
 def init_user_loop(games, users, users_lock, usr_queue):
-    # adds user -> address to users dict
     while True:
         name = ''
         game = ''
         conn, addr = SERVER.accept()
 
-        print("got user")
+        print("got user") # debug print
+        get_user = threading.Thread(target=get_one_user_info,
+            args=(games, users, users_lock, usr_queue, conn, addr))
+        get_user.start()
+
+def get_one_user_info(games, users, users_lock, usr_queue, conn, addr):
         conn.send(json.dumps(["name", "What is your name?"]))
         while True:
             try:
-                name = conn.recv(4096)[0:-1]
+                name = conn.recv(BUFF_SIZE)[0:-1]
                 if name not in users:
                     users_lock.acquire()
                     users[name] = [conn, INIT_MONEY]
@@ -49,12 +68,11 @@ def init_user_loop(games, users, users_lock, usr_queue):
                     print(name + " connected")
                     break
                 else:
-                    # TODO fix this to force user to enter unique name
                     while True:
                         conn.send(json.dumps(["name", 
                         "Sorry, name is taken, try again."]))
                         try:
-                            name = conn.recv(4096)[0:-1]
+                            name = conn.recv(BUFF_SIZE)[0:-1]
                             if name not in users:
                                 break
                         except:
@@ -65,26 +83,27 @@ def init_user_loop(games, users, users_lock, usr_queue):
                     users[name] = [conn, INIT_MONEY]
                     users_lock.release()
                     print(name + " connected")
+                    break
             except:
                 print("exception caught in user registration")
                 pass
 
-        # add game to dict
+        # loops until user enters a recognized game
         print("sending game choice to user")
         conn.send(json.dumps(['game',
             "Which game do you want to join? Baccarat, Blackjack, " \
                   + "or Roulette?"]))
         while True:
             try:
-                game = conn.recv(4096).lower()[0:-1]
+                game = conn.recv(BUFF_SIZE).lower()[0:-1]
                 if game == 'baccarat':
-                    conn.send("Joined Baccarat!")
+                    conn.send(json.dumps(['print', None, "Joined Baccarat!"]))
                     break
                 elif game == 'blackjack':
-                    conn.send("Joined Blackjack!")
+                    conn.send(json.dumps(['print', None, "Joined Blackjack!"]))
                     break
                 elif game == 'roulette':
-                    conn.send("Joined Roulette!")
+                    conn.send(json.dumps(['print', None, "Joined Roulette!"]))
                     break
                 else:
                     conn.send(json.dumps(['game', 
@@ -93,8 +112,12 @@ def init_user_loop(games, users, users_lock, usr_queue):
             except:
                 continue
 
-        msg_from_user_to_game(games, game, \
+        # send message to game_manager to let user join 
+
+        msg_from_user_to_game(users, users_lock, games, game, \
                         ['join', name, users[name][1], None, None])
+
+        # lock users dict and add the game name the user is in
         users_lock.acquire()
         users[name].append(game)
         users_lock.release()
@@ -106,41 +129,71 @@ def init_user_loop(games, users, users_lock, usr_queue):
 
 ###########################################################################
 # message sending functions
-def msg_from_user_to_game(games, game, message):
-    proper_msg = set(['join', 'quit', 'bet']) # add more msg later
+def msg_from_user_to_game(users, users_lock, games, game, message):
+    proper_msg = set(['join', 'bet', 'continue', 'switch', 'quit', \
+        'bjack-move'])
     if message[0] not in proper_msg:
         print("Invalid message")
         return
 
-    if game not in games:
-        print("Invalid game")
+    # a 'switch' command is converted to quitting the game the user
+    # is in, and joining a different game
+    if message[0] == 'switch':
+        message_quit = ['quit-game'] + message[1:]
+        message_join = ['join'] + message[1:]
+
+        # send quit and join to appropriate game_managers
+        msg_from_user_to_game(users, users_lock, games, 
+                    users[message[1]][2], message_quit)
+        msg_from_user_to_game(users, users_lock, games,
+                    game, message_join)
+        users_lock.acquire()
+        users[message[1]][2] = game
+        users_lock.release()
         return
-    
-    print(message)
-    print(type(message))
-    print("Sending message to " + str(games[game][0]))
+    if message[0] == 'quit':
+        users_lock.acquire()
+        print message[1] + " quitting"
+        users.pop(message[1])
+        users_lock.release()
+
+    print(message) # debug print
+    print(type(message)) # debug print
+    print("Sending message to " + str(games[game][0])) # debug print
     games[game][0].send(json.dumps(message))
 
+# listen for messages from game and take appropriate action
 def listen_for_game(games, name, conn, game_queue, users):
     actions = {
-        'users'  : print_users,
-        'bet'    : ask_for_bet,
-        'result' : broadcast_result
+        'users'      : print_users,
+        'bet'        : ask_for_bet,
+        'wait'       : print_a_message,
+        'result'     : broadcast_result,
+        'bjack-deal' : blackjack_deal,
+        'bjack-hit'  : blackjack_hit,
     }
+
+    # continuously receives messages from game
     while True:
         try:
-            message = json.loads(conn.recv(4096))
-            if message:
-                print("Message from game: " + json.dumps(message))
-                actions[message[0]](message[1:], users)
-        except:
+            messages = conn.recv(BUFF_SIZE).split("\0")
+            for m in messages[:-1]:
+                message = json.loads(m)
+                if message:
+                    print("Message from game: " + json.dumps(message))
+                    actions[message[0]](message[1:], users)
+        except Exception, e :
+            print str(e)
+            print 'didnt get message'
             continue
 
+# listen for messages from user and adds to usr_queue
 def listen_for_user(users, users_lock, name, conn, usr_queue):
     while True:
         try:
-            message = json.loads(conn.recv(4096))
+            message = json.loads(conn.recv(BUFF_SIZE))
             if message:
+                # adds message to the queue
                 usr_queue.put(message)
             else:
                 users_lock.acquire()
@@ -151,6 +204,8 @@ def listen_for_user(users, users_lock, name, conn, usr_queue):
 
 ###########################################################################
 # message handling functions
+
+# debug print function
 def print_users(users_list, users):
     print(users_list, users)
 
@@ -162,34 +217,47 @@ def ask_for_bet(details, users):
         users[details[0]][0].close()
         users.pop(details[0])
 
+def blackjack_deal(details, users):
+    user = details[0]
+    cards = details[3]
+    users[user][0].send(json.dumps(['bjack-cards', cards, user]))
+
+def blackjack_hit(details, users):
+    user = details[0]
+    card = details[3]
+    users[user][0].send(json.dumps(['bjack-hit', card, user]))
+
+def print_a_message(details, users):
+    print("sending printed message to " + str(users[details[0]][0]))
+    try:
+        users[details[0]][0].send(json.dumps(['print'] + details))
+    except:
+        print("can't send printed instruction")
+        users[details[0]][0].close()
+        users.pop(details[0])
+
 def broadcast_result(details, users):
     participants = details[0][0] + details[0][1]
     print("participants: " + json.dumps(participants))
-
+    print "PRINTING RESULTS"
+    msg = details[0][2]
+    print msg
     for p in participants:
         users[p[0]][1] += int(p[1])
-        message = " won "
-        if p[1] < 0:
-            message = " lost "
+        message = " won " if p[1] >= 0 else " lost "
+        msg_on_screen = msg + "You" + str(message) + str(abs(p[1])) \
+                    + ". Your total is now " + str(users[p[0]][1])
+
         try:
-            print(['result', "You" + str(message) \
-                        + str(abs(p[1])) + ". Your total is now " \
-                        + str(users[p[0]][1])])
-            users[p[0]][0].send(json.dumps(['result', "You" + str(message) \
-                        + str(abs(p[1])) + ". Your total is now " \
-                        + str(users[p[0]][1])]))
+            print "sending result"
+            print(json.dumps(['result', p[0], msg_on_screen, 
+                            users[p[0]][1], details[-1]])) # debug print
+            users[p[0]][0].send(json.dumps(['result', p[0], msg_on_screen,
+                            users[p[0]][1], details[-1]]))
         except:
+            print("send result to user exception") # debug print
             users[p[0]][0].close()
             users.pop(p[0])
-
-# def broadcast(message, users_lock, users):
-#     with users_lock:
-#         for user, data in users.iteritems():
-#             try:
-#                 data[0].send(message)
-#             except:
-#                 data[0].close()
-#                 users.pop(user)
 
 ###########################################################################
 # main server loop
@@ -205,6 +273,7 @@ def server_loop(ip_addr, port):
                                  args=(games, game_queue, users))
     game_loop.start()
     
+    # only start user_loop once all games are initialized
     while game_loop.is_alive():
         continue
     
@@ -212,13 +281,17 @@ def server_loop(ip_addr, port):
                                  args=(games, users, users_lock,
                                        usr_queue))
     user_loop.start()
+
+    # this loop continuously checks usr_queue and pop off messages
+    # in order they were entered
     while True:
         if usr_queue.empty():
             continue
         else:
             message = usr_queue.get()
             game_name = message[-1]
-            msg_from_user_to_game(games, game_name, message)
+            msg_from_user_to_game(users, users_lock,games, 
+                                    game_name, message)
 
 
 def main(args):
