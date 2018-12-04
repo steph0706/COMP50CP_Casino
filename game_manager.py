@@ -68,35 +68,35 @@ class Game_manager:
                     message = ''
                     if len(m_list) == 0:
                         self.self_lock.release()
-                        continue
+                        # continue
                     else:
-                        message = m_list[0]
-                        print(message)
-
-                    try:
-                        message = json.loads(message)
-                        user     = message[1] if len(message) > 1 else None
-                        money    = message[2] if len(message) > 2 else None
-                        betsize  = message[3] if len(message) > 3 else None
-                        beton    = message[4] if len(message) > 4 else None
-                        fun_name = self.MESSAGES[message[0]]
-                        self.self_lock.release()
-                        fun_name(self, user, money, betsize, beton)
-                    except Exception, e:
-                        print("Exception caught")
-                        print str(e)
-                        print(message)
-                        print(type(message))
-                        self.self_lock.release()
+                        for message in m_list:
+                            print(message)
+                            try:
+                                message = json.loads(message)
+                                user     = message[1] if len(message) > 1 else None
+                                money    = message[2] if len(message) > 2 else None
+                                betsize  = message[3] if len(message) > 3 else None
+                                beton    = message[4] if len(message) > 4 else None
+                                fun_name = self.MESSAGES[message[0]]
+                                self.self_lock.release()
+                                fun_name(self, user, money, betsize, beton)
+                            except Exception, e:
+                                print("Exception caught")
+                                print str(e)
+                                print(message)
+                                print(type(message))
+                                self.self_lock.release()
 
         self.SERVER.close()
 
     # receive message with time constraint
     def receive_message(self, sock, message):
         m = ''
-        m = sock.recv(4096)
-        if m != '':
-            message.append(m)
+        msgs = sock.recv(4096).split("\0")
+        for m in msgs:
+            if m != '' and m != "\0":
+                message.append(m)
 
     # check message queue from rooms continuously
     def listen_for_room(self):

@@ -23,7 +23,11 @@ class Room:
                 'Waiting for more users to join the room'])
     
     def addToRoom(self, user):
+        if self.roomLock.locked():
+            self.msgs.put(['wait', user[0], 'Waiting for current game to '\
+                                + "finish"])
         self.roomLock.acquire()
+        self.msgs.put(['wait', user[0], 'Entering game room...'])
         self.room.append(user)
         self.roomLock.release()
         self.waitingMsg(user)

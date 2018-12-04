@@ -21,6 +21,22 @@ class blackjack:
             done = done and (bet[1] == 'stand')
         return done
 
+    def busted(self, cards):
+        total = 0
+        for card in cards:
+            value = card[0]
+            if value == 'J' or value == 'Q' or value == 'K':
+                value = 10
+            if value == 'A':
+                value = 11
+            total += int(value)
+
+        for card in cards:
+            value = card[0]
+            if total > 21 and value == 'A':
+                total -= 10
+        return total > 21
+
     def play(self, msgs):
         winners = []
         losers = []
@@ -39,10 +55,15 @@ class blackjack:
         while not doneHitting:
             for user, bet in self.users.iteritems():
                 if bet[1] == 'hit':
+                    if self.busted(bet[2:]):
+                        msgs.put(['wait', user, 'Oops, you have already ' + \
+                            'busted'])
+                        self.users[user][1] = 'stand'
+                        break
                     card3 = self.deck.draw_card()
-                    entry = self.users[user] + [card3]
-                    entry[1] = None
-                    self.users[user] = entry
+                    self.users[user] += [card3]
+                    self.users[user][1] = None
+                    # self.users[user] = entry
                     msgs.put(['bjack-hit', user, None, None, card3])
             doneHitting = self.allDoneHitting()
 
@@ -59,7 +80,6 @@ class blackjack:
                     value = 11
                 total += int(value)
 
-            
             for card in cards:
                 value = card[0]
                 if total > 21 and value == 'A':
@@ -68,7 +88,7 @@ class blackjack:
             if total > 21:
                 losers.append((user, -bet[0]))
             elif self.checkForNatural(cards):
-                winners.append(user, bet[0] * 1.5)
+                winners.append((user, bet[0] * 1.5))
             elif total == 21:
                 winners.append((user, bet[0]))
             else:

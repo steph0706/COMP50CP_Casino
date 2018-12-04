@@ -53,6 +53,11 @@ def init_user_loop(games, users, users_lock, usr_queue):
 
         print("got user") # debug print
 
+        get_user = threading.Thread(target=get_one_user_info,
+            args=(games, users, users_lock, usr_queue, conn, addr))
+        get_user.start()
+
+def get_one_user_info(games, users, users_lock, usr_queue, conn, addr):
         # loops until user enters a unique name
         conn.send(json.dumps(["name", "What is your name?"]))
         while True:
@@ -92,21 +97,27 @@ def init_user_loop(games, users, users_lock, usr_queue):
                   + "or Roulette?"]))
         while True:
             try:
-                game = conn.recv(BUFF_SIZE).lower()[0:-1]
+                msg = conn.recv(BUFF_SIZE).lower().split("\0")
+                print "game: " + str(msg[0])
+                game = msg[0][:-1]
                 if game == 'baccarat':
-                    conn.send("Joined Baccarat!")
+                    conn.send(json.dumps(['print', None, "Joined Baccarat!"]) \
+                        + "\0")
                     break
                 elif game == 'blackjack':
-                    conn.send("Joined Blackjack!")
+                    conn.send(json.dumps(['print', None, "Joined Blackjack!"]) \
+                        + "\0")
                     break
                 elif game == 'roulette':
-                    conn.send("Joined Roulette!")
+                    conn.send(json.dumps(['print', None, "Joined Roulette!"]) \
+                        + "\0")
                     break
                 else:
                     conn.send(json.dumps(['game', 
                               "Invalid option. Please choose between " \
                               + "Baccarat, Blackjack, or Roulette."]))
-            except:
+            except Exception, e:
+                print str(e)
                 continue
 
         # send message to game_manager to let user join 
@@ -157,7 +168,7 @@ def msg_from_user_to_game(users, users_lock, games, game, message):
     print(message) # debug print
     print(type(message)) # debug print
     print("Sending message to " + str(games[game][0])) # debug print
-    games[game][0].send(json.dumps(message))
+    games[game][0].send(json.dumps(message) + "\0")
 
 # listen for messages from game and take appropriate action
 def listen_for_game(games, name, conn, game_queue, users):
@@ -174,7 +185,10 @@ def listen_for_game(games, name, conn, game_queue, users):
     while True:
         try:
             messages = conn.recv(BUFF_SIZE).split("\0")
-            for m in messages[:-1]:
+            print "game messages: " + str(messages)
+            for m in messages:
+                if m == "\0":
+                    pass
                 message = json.loads(m)
                 if message:
                     print("Message from game: " + json.dumps(message))
@@ -188,14 +202,17 @@ def listen_for_game(games, name, conn, game_queue, users):
 def listen_for_user(users, users_lock, name, conn, usr_queue):
     while True:
         try:
-            message = json.loads(conn.recv(BUFF_SIZE))
-            if message:
-                # adds message to the queue
-                usr_queue.put(message)
-            else:
-                users_lock.acquire()
-                users.pop(name)
-                users_lock.release()
+            messages = conn.recv(BUFF_SIZE).split("\0")
+            for m in messages:
+                message = json.loads(m)
+                print "message from user:" + str(message)
+                if message:
+                    # adds message to the queue
+                    usr_queue.put(message)
+                else:
+                    users_lock.acquire()
+                    users.pop(name)
+                    users_lock.release()
         except:
             continue
 
@@ -209,7 +226,7 @@ def print_users(users_list, users):
 def ask_for_bet(details, users):
     print("sending bet instructions to " + str(users[details[0]][0]))
     try:
-        users[details[0]][0].send(json.dumps(['bet'] + details))
+        users[details[0]][0].send(json.dumps(['bet'] + details) + "\0")
     except:
         users[details[0]][0].close()
         users.pop(details[0])
@@ -217,17 +234,17 @@ def ask_for_bet(details, users):
 def blackjack_deal(details, users):
     user = details[0]
     cards = details[3]
-    users[user][0].send(json.dumps(['bjack-cards', cards, user]))
+    users[user][0].send(json.dumps(['bjack-cards', cards, user]) + "\0")
 
 def blackjack_hit(details, users):
     user = details[0]
     card = details[3]
-    users[user][0].send(json.dumps(['bjack-hit', card, user]))
+    users[user][0].send(json.dumps(['bjack-hit', card, user]) + "\0")
 
 def print_a_message(details, users):
     print("sending printed message to " + str(users[details[0]][0]))
     try:
-        users[details[0]][0].send(json.dumps(['print'] + details))
+        users[details[0]][0].send(json.dumps(['print'] + details) + "\0")
     except:
         print("can't send printed instruction")
         users[details[0]][0].close()
@@ -250,7 +267,7 @@ def broadcast_result(details, users):
             print(json.dumps(['result', p[0], msg_on_screen, 
                             users[p[0]][1], details[-1]])) # debug print
             users[p[0]][0].send(json.dumps(['result', p[0], msg_on_screen,
-                            users[p[0]][1], details[-1]]))
+                            users[p[0]][1], details[-1]]) + "\0")
         except:
             print("send result to user exception") # debug print
             users[p[0]][0].close()

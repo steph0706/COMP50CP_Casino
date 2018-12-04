@@ -31,18 +31,24 @@ def main(args):
         for socks in read_sockets:
             # print("got server in loop " + str(loop))
             if socks == SERVER:
-                message = socks.recv(4096)
+                messages = socks.recv(4096).split("\0")
                 # print("message from server loop " + str(loop) \
-                #                + ": " + str(message)) # debug print
+                #                + ": " + str(messages)) # debug print
                 try:
-                    message = json.loads(message)
-                    action = message[0]
-                    details = message[1:]
-                    loop = actions[action](details, SERVER)
-                except:
-                    message = message
+                    for m in messages:
+                        if m == "\0":
+                            pass
+                        message = json.loads(m)
+                        action = message[0]
+                        details = message[1:]
+                        loop = actions[action](details, SERVER)
+                except Exception, e:
+                    message = messages
+
+                    # print "exception in client listen"
+                    # print str(e)
                     # print("message from server loop exception " \
-                    #           + ": " + str(message)) # debug print
+                    #           + ": " + str(messages)) # debug print
     SERVER.close()
 
 # try until an input is given from stdin
@@ -159,7 +165,7 @@ def handle_result(details, server):
 
 
     message = [command, details[0], details[2], ans]
-    server.send(json.dumps(message))
+    server.send(json.dumps(message) + "\0")
     if command == 'quit':
         server.close()
         return False
