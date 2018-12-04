@@ -10,7 +10,7 @@ import game_server
 SERVER = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 SERVER.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 INIT_MONEY = 1000
-NUM_GAMES = 2 # edit this to change number of games needed to connect before
+NUM_GAMES = 3 # edit this to change number of games needed to connect before
               # users can start connecting
 BUFF_SIZE = 4096
 
