@@ -149,13 +149,18 @@ def handle_result(details, server):
         ans = details[-1]
         print "Waiting for more users to join the room"
     elif str(ans) == 'no':
+        set_of_ans = set(['blackjack', 'roulette', 'baccarat'])
+        set_of_ans.remove(details[-1])
+        
         ans = try_to_get_input("Which game do you want to play now? Please" \
-                + " enter blackjack, roulette, or baccarat. If you want to" \
+                + " enter " + json.dumps(list(set_of_ans))[1:-1] + ". If you want to" \
                 + " quit, please enter 'quit'.\n")
-        while str(ans).lower() not in set(['blackjack', 'roulette', \
-                                            'baccarat', 'quit']):
+        set_of_ans.add('quit')
+
+        while str(ans).lower() not in set_of_ans:
             ans = try_to_get_input("Invalid input. Please enter one of the" \
-                + " following:\nblackjack, roulette, baccarat, quit")
+                + " following:\n" + json.dumps(list(set_of_ans))[1:-1] + "\n") 
+
         
         if ans == 'quit':
             command = ans

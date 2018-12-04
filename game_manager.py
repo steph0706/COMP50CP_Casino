@@ -8,6 +8,7 @@ import time
 import generic_game
 import blackjack
 import roulette
+import baccarat
 from Queue import *
 
 class Game_manager:
@@ -36,7 +37,7 @@ class Game_manager:
         self.game_map = {
             'blackjack' : blackjack.blackjack,
             'roulette'  : roulette.roulette,
-            'baccarat'  : generic_game.gen_game
+            'baccarat'  : baccarat.baccarat
         }
 
     def connect_to_casino(self, ip_addr, port):
