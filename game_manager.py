@@ -51,7 +51,8 @@ class Game_manager:
 
             # if no socket is found, release lock and loop again
             if len(read_sockets) == 0:
-                self.self_lock.release()
+            	if self.self_lock.locked():
+                	self.self_lock.release()
 
             # only enter here if some socket is found
             for socks in read_sockets:
