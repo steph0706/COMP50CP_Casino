@@ -3,8 +3,6 @@ import random
 class roulette:
     def __init__(self):
         self.users = {}
-        # do nothing
-        # return True
 
     def bet(self, user, betsize, beton):
         self.users[user] = [betsize, beton]
