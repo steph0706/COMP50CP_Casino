@@ -164,7 +164,7 @@ def msg_from_user_to_game(users, users_lock, games, game, message):
         print message[1] + " quitting"
         users.pop(message[1])
         users_lock.release()
-
+   
     print(message) # debug print
     print(type(message)) # debug print
     print("Sending message to " + str(games[game][0])) # debug print

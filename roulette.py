@@ -41,49 +41,49 @@ class roulette:
         if landon % 2 == 0:
             for user, bet in self.users.iteritems():
                 if bet[1] == 'even':
-                    winners.append((user, bet[0]*2))
+                    winners.append((user, bet[0]))
                 elif bet[1] == 'odd':
                     losers.append((user, -bet[0]))
         if landon % 2 != 0:
             for user, bet in self.users.iteritems():
                 if bet[1] == 'odd':
-                    winners.append((user, bet[0]*2))
+                    winners.append((user, bet[0]))
                 elif bet[1] == 'even':
                     losers.append((user, -bet[0]))
         if landon > 0 and landon <= 12:
             for user, bet in self.users.iteritems():
                 if bet[1] == '1-3':
-                    winners.append((user, bet[0]*3))
+                    winners.append((user, bet[0]*2))
                 elif bet[1] == '2-3' or bet[1] == '3-3':
                     losers.append((user, -bet[0]))
         if landon > 13 and landon <= 25:
             for user, bet in self.users.iteritems():
                 if bet[1] == '2-3':
-                    winners.append((user, bet[0]*3))
+                    winners.append((user, bet[0]*2))
                 elif bet[1] == '3-3' or bet[1] == '1-3':
                     losers.append((user, -bet[0]))
         if landon > 25 and landon <= 36:
             for user, bet in self.users.iteritems():
                 if bet[1] == '3-3':
-                    winners.append((user, bet[0]*3))
+                    winners.append((user, bet[0]*2))
                 elif bet[1] == '1-3' or bet[1] == '2-3':
                     losers.append((user, -bet[0]))
         if landon < 19:
             for user, bet in self.users.iteritems():
                 if bet[1] == 'low':
-                    winners.append((user, bet[0]*2))
+                    winners.append((user, bet[0]))
                 elif bet[1] == 'high':
                     losers.append((user, -bet[0]))
         else:
             for user, bet in self.users.iteritems():
                 if bet[1] == 'high':
-                    winners.append((user, bet[0]*2))
+                    winners.append((user, bet[0]))
                 elif bet[1] == 'low':
                     losers.append((user, -bet[0]))
         for user, bet in self.users.iteritems():
             if self.isInt(bet[1]):
                 if int(bet[1]) == landon:
-                    winners.append((user, bet[0]*36))
+                    winners.append((user, bet[0]*35))
                 else:
                     losers.append((user, -bet[0]))
 
