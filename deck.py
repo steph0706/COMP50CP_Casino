@@ -40,8 +40,10 @@ class deck:
                 self.deck[i] = ('K', self.deck[i][1])
 
 
-    def get_face_value(self, card):
-    """ Returns the numerical value of face cards and Ace. """
+    def get_value(self, card):
+        """ Returns the numerical value of face cards and Ace. """
         if card[0] in self.face_value:
-            return self.face_value[card[0]] 
+            return self.face_value[card[0]]
+        else:
+            return card[0]
 

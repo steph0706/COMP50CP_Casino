@@ -24,11 +24,7 @@ class blackjack:
     def busted(self, cards):
         total = 0
         for card in cards:
-            value = card[0]
-            if value == 'J' or value == 'Q' or value == 'K':
-                value = 10
-            if value == 'A':
-                value = 11
+            value = self.deck.get_value(card)
             total += int(value)
 
         for card in cards:
@@ -73,12 +69,9 @@ class blackjack:
             cards = bet[2:]
             total = 0
             for card in cards:
-                value = card[0]
-                if value == 'J' or value == 'Q' or value == 'K':
-                    value = 10
-                if value == 'A':
-                    value = 11
-                total += int(value)
+                value = self.deck.get_value(card)
+                print value
+                total += int(self.deck.get_value(card))
 
             for card in cards:
                 value = card[0]
@@ -117,21 +110,13 @@ class blackjack:
         total = 0
         for card in dealer:
             msg += str(card[0]) + " of " + str(card[1]) + ", "
-            value = card[0]
-            if value == 'J' or value == 'Q' or value == 'K':
-                value = 10
-            if value == 'A':
-                value = 11
+            value = self.deck.get_value(card)
             total += int(value)
 
         while total < 16:
             card3 = self.deck.draw_card()
             msg += str(card3[0]) + " of " + str(card3[1]) + ", "
-            value = card3[0]
-            if value == 'J' or value == 'Q' or value == 'K':
-                value = 10
-            if value == 'A':
-                value = 11
+            value = self.deck.get_value(card3)
             total += int(value)
 
         if total > 21:
