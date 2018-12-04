@@ -2,11 +2,20 @@ import random
 
 class roulette:
     def __init__(self):
+         """ 
+            dictionary mapping users --> [betsize, beton] 
+        """
         self.users = {}
 
+    """ sets the users bet in the dictionary """
     def bet(self, user, betsize, beton):
         self.users[user] = [betsize, beton]
 
+
+    """ 
+        returns the correct bet message to send to the client, and the options
+        that the user can type
+    """
     def bet_message(self):
         return "Place your bets! Before all your bets, please type " \
                     + "Bet on it landing on an even number by typing 'even'\n" \
@@ -24,6 +33,7 @@ class roulette:
                ['even', 'odd', '1-3', '2-3', '3-3', 'high', 'low'] \
                 + [str(i) for i in range(37)]
 
+    """ returns whether num is an integer or not """
     def isInt(self, num):
         try:
             if int(num):
@@ -31,6 +41,12 @@ class roulette:
         except:
             return False
 
+    """ 
+        contains the actual game play, and returns the result of the game.
+        the result of the game consists of a list of winners and losers and the
+        amount they won/lost respectively and the result of the game
+        to print to the client
+    """
     def play(self, msgs):
         winners = []
         losers  = []
@@ -87,5 +103,6 @@ class roulette:
 
         return [winners, losers, "The result was " + str(landon) + "\n"]
 
+    """ resets the game """
     def reset(self):
         self.users = {}
