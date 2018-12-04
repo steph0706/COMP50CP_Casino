@@ -95,11 +95,6 @@ def handle_hit(details, server):
     return True
 
 def handle_bet(details, server):
-    if details[1] <= 0:
-        print("You have no money left. Quitting casino.")
-        message = ['quit', details[0], details[1], 'quit']
-        server.send(json.dumps(message))
-        return False
     betsize = try_to_get_input("How much do you want to bet? Note: " \
                             + "your total money is " + str(details[1]) + '\n')
 
@@ -136,9 +131,15 @@ def print_a_message(details, server):
     return True
 
 def handle_result(details, server):
-
     # checks whether input is yes/no
     print(details[1])
+    if details[2] <= 0:
+        print("You have no money left. Better luck next time!\n" \
+            + "Quitting game.")
+        message = ['quit', details[0], details[1], details[-1]]
+        server.send(json.dumps(message))
+        return False
+
     ans = try_to_get_input("Continue game? Please type yes or no\n")
     while str(ans).lower() not in set(['yes', 'no']):
         ans = try_to_get_input("Please enter 'yes' or 'no'.\n")
