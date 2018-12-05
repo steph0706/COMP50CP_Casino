@@ -97,7 +97,7 @@ class Game_manager:
         m = ''
         msgs = sock.recv(4096).split("\0")
         for m in msgs:
-            if m != '' and m != "\0":
+            if m != '':
                 message.append(m)
 
     # check message queue from rooms continuously

@@ -187,7 +187,7 @@ def listen_for_game(games, name, conn, game_queue, users):
             messages = conn.recv(BUFF_SIZE).split("\0")
             print "game messages: " + str(messages)
             for m in messages:
-                if m == "\0":
+                if m == "":
                     continue
                 message = json.loads(m)
                 if message:
@@ -204,7 +204,7 @@ def listen_for_user(users, users_lock, name, conn, usr_queue):
         try:
             messages = conn.recv(BUFF_SIZE).split("\0")
             for m in messages:
-                if m == "\0":
+                if m == "":
                     continue
                 message = json.loads(m)
                 print "message from user:" + str(message)
