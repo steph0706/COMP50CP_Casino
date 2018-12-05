@@ -37,7 +37,7 @@ def main(args):
                 try:
                     for m in messages:
                         if m == "\0":
-                            pass
+                            continue
                         message = json.loads(m)
                         action = message[0]
                         details = message[1:]
