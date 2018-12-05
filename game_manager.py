@@ -68,27 +68,25 @@ class Game_manager:
 
                     # if no message found loop back to beginning
                     message = ''
-                    if len(m_list) == 0:
-                        self.self_lock.release()
-                        # continue
-                    else:
-                        for message in m_list:
+                    self.self_lock.release()
+                    for message in m_list:
+                        self.self_lock.acquire()
+                        print(message)
+                        try:
+                            message = json.loads(message)
+                            user     = message[1] if len(message) > 1 else None
+                            money    = message[2] if len(message) > 2 else None
+                            betsize  = message[3] if len(message) > 3 else None
+                            beton    = message[4] if len(message) > 4 else None
+                            fun_name = self.MESSAGES[message[0]]
+                            self.self_lock.release()
+                            fun_name(self, user, money, betsize, beton)
+                        except Exception, e:
+                            print("Exception caught")
+                            print str(e)
                             print(message)
-                            try:
-                                message = json.loads(message)
-                                user     = message[1] if len(message) > 1 else None
-                                money    = message[2] if len(message) > 2 else None
-                                betsize  = message[3] if len(message) > 3 else None
-                                beton    = message[4] if len(message) > 4 else None
-                                fun_name = self.MESSAGES[message[0]]
-                                self.self_lock.release()
-                                fun_name(self, user, money, betsize, beton)
-                            except Exception, e:
-                                print("Exception caught")
-                                print str(e)
-                                print(message)
-                                print(type(message))
-                                self.self_lock.release()
+                            print(type(message))
+                            self.self_lock.release()
 
         self.SERVER.close()
 
