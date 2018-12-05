@@ -78,7 +78,11 @@ def handle_bjack(details, server):
         + " and " + cards[1][0] + " of " + cards[1][1] + "\n" \
         + "Hit or Stand?\n"
     
-    move = try_to_get_input(msg)
+    while True:
+        move = try_to_get_input(msg)
+        if move != 'hit' and move != 'stand':
+            print "Please type either hit or stand"
+
     if move == 'stand':
         print "Waiting for other users to finish betting"
     server.send(json.dumps(['bjack-move', details[1], move, 'blackjack']))
@@ -88,7 +92,12 @@ def handle_hit(details, server):
     card = details[0]
     msg = "Here's your next card: " + card[0] + " of " + card[1] + "\n" \
         + "Hit or Stand?\n"
-    move = try_to_get_input(msg)
+    
+    while True:
+        move = try_to_get_input(msg)
+        if move != 'hit' and move != 'stand':
+            print "Please type either hit or stand"
+            
     if move == 'stand':
         print "Waiting for other users to finish betting"
     server.send(json.dumps(['bjack-move', details[1], move, 'blackjack']))
