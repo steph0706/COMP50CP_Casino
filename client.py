@@ -82,6 +82,8 @@ def handle_bjack(details, server):
         move = try_to_get_input(msg)
         if move != 'hit' and move != 'stand':
             print "Please type either hit or stand"
+        else:
+            break
 
     if move == 'stand':
         print "Waiting for other users to finish betting"
@@ -97,6 +99,8 @@ def handle_hit(details, server):
         move = try_to_get_input(msg)
         if move != 'hit' and move != 'stand':
             print "Please type either hit or stand"
+        else:
+            break
             
     if move == 'stand':
         print "Waiting for other users to finish betting"
