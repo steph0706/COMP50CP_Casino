@@ -1,7 +1,8 @@
 """
     Author: all_in
 
-    deck class contains a deck of the 52 playing cards and takes care of drawing functions.
+    deck class contains a deck of the 52 playing cards and takes care of 
+    drawing functions.
 """
 
 import random, time

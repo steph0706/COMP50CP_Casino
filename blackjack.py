@@ -62,8 +62,8 @@ class blackjack:
     def play(self, msgs):     
         """ 
             contains the actual game play, and returns the result of the game.
-            the result of the game consists of a list of winners and losers and the
-            amount they won/lost respectively and the result of the game
+            the result of the game consists of a list of winners and losers and
+            the amount they won/lost respectively and the result of the game
             to print to the client
         """
         winners = []
@@ -74,6 +74,10 @@ class blackjack:
             card1 = self.deck.draw_card()
             card2 = self.deck.draw_card()
             self.users[user] = self.users[user] + [card1, card2]
+            """ 
+                puts message in specified format in message queue for 
+                game manager to handle
+            """
             msgs.put(['bjack-deal', user, None, None, [card1, card2]])
         
         """ deals two cards to dealer """
@@ -89,10 +93,14 @@ class blackjack:
             for user, bet in self.users.iteritems():
                 if bet[1] == 'hit':
                     if self.busted(bet[2:]):
+                        """ 
+                            puts message in specified format in message queue 
+                            for game manager to handle
+                        """
                         msgs.put(['wait', user, 'Oops, you have already ' + \
                             'busted'])
                         msgs.put(['wait', user, 'Waiting for other users to' + \
-                            'finish betting'])
+                            ' finish betting'])
                         self.users[user][1] = 'stand'
                         break
                     card3 = self.deck.draw_card()
@@ -103,6 +111,10 @@ class blackjack:
                         stand or hit
                     """
                     self.users[user][1] = None
+                    """ 
+                        puts message in specified format in message queue for 
+                        game manager to handle
+                    """
                     msgs.put(['bjack-hit', user, None, None, card3])
             
             doneHitting = self.allDoneHitting()
@@ -153,7 +165,7 @@ class blackjack:
 
     
     def get_dealer(self, dealer):
-        """ gets the dealers score """
+        """ gets the dealers score and returns the score and result message """
         msg = "Dealer's hand was "
         total = 0
         for card in dealer:

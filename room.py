@@ -1,3 +1,10 @@
+"""
+    Author: all_in
+
+    room class represents a room playing a game.
+    contains users and keeps track of how much money they have
+"""
+
 import threading
 import time
 from Queue import *
@@ -12,11 +19,15 @@ class Room:
         """ a queue of bets """
         self.bets   = Queue()
 
-        """ a list representing the room containing users """
+        """ 
+            a list representing the room containing users, each user is
+            represented as [username, user_money]
+        """
         self.room   = []
 
         """ the game function to be played """
         self.game   = game
+        
         """ stores the current game object """
         self.curr_game = None
         self.game()
@@ -89,30 +100,42 @@ class Room:
             if len(self.room) < 2:
                 continue
             else:
+                """ lock the room while a game is being played """
                 self.roomLock.acquire()
-                self.printRoom() # debugging print to see who's in room
+                """ debugging purposes - see whos in the room """
+                self.printRoom() 
 
+                """ start the game function and set curr_game to the object """
                 curr_game = self.game()
                 self.curr_game = curr_game
 
-                # loops thru players so everyone can place bet
+                """ loops through players so everyone can place bet """
                 for user in self.room:
                     bet_msg, possible_bet = curr_game.bet_message()
 
-                    # put bet message in specified format on queue
+                    """ 
+                        put bet message in specified format on queue to be
+                        read by the game manager and sent to the server 
+                    """
                     self.msgs.put(['bet', user[0], user[1], 
                                     bet_msg, possible_bet])
 
+                    """ 
+                        send message telling user that other players are still
+                        betting
+                    """
                     for otherUser in self.room:
                         if otherUser != user:
                             self.msgs.put(['wait', otherUser[0], 'Waiting for '\
                                 + user[0] + " to bet"])
 
                     user_bet = self.getBet()
+                    """ put the users bet into the game """
                     curr_game.bet(user_bet[0], user_bet[1], user_bet[2])
 
                 result = curr_game.play(self.msgs)
                 self.msgs.put(['result', result])
+                """ update users money after result of game is received """
                 self.getUpdate()
                 self.roomLock.release()
 
