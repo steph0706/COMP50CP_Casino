@@ -1,3 +1,11 @@
+"""
+
+    game_server.py
+
+    This is a main function that creates a game_manager object; open
+    this file to connect to casino server
+
+"""
 import socket
 import sys
 import select
