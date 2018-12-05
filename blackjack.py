@@ -91,8 +91,8 @@ class blackjack:
                     if self.busted(bet[2:]):
                         msgs.put(['wait', user, 'Oops, you have already ' + \
                             'busted'])
-                        msgs.put(['wait', user, 'Waiting for other users to' \
-                            + 'finish betting'])
+                        msgs.put(['wait', user, 'Waiting for other users to' + \
+                            'finish betting'])
                         self.users[user][1] = 'stand'
                         break
                     card3 = self.deck.draw_card()
@@ -173,7 +173,7 @@ class blackjack:
 
 
     def stop_hit(self, user):
-         """ 
+        """ 
             sets the user's move in the dictionary to stand 
             and notifies the waiting thread that they've
             started moves/hitting

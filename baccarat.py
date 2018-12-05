@@ -102,11 +102,11 @@ class baccarat:
 		for user, bet in self.users.iteritems():
 			if bet[1] == result:
 				if result == 'player':
-					winners.append((user, bet[0]*2))
+					winners.append((user, bet[0]*1))
 				elif result == 'banker':
 					winners.append((user, bet[0]*1.95))
 				else:
-					winners.append((user, bet[0]*9))
+					winners.append((user, bet[0]*8))
 			else:
 				losers.append((user, -bet[0]))
 

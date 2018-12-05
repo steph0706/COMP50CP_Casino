@@ -41,7 +41,7 @@ class roulette:
             return False
 
     def play(self, msgs):
-         """ 
+        """ 
             contains the actual game play, and returns the result of the game.
             the result of the game consists of a list of winners and losers and the
             amount they won/lost respectively and the result of the game
