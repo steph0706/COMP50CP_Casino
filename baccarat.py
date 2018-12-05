@@ -8,7 +8,7 @@ import deck
 
 class baccarat:
 	def __init__(self):
-		""" Initializes dict of users and a deck. """
+		""" Initializes dict of users in the room and a deck. """
 		self.users = {}
 		self.deck = deck.deck()
 
@@ -29,6 +29,7 @@ class baccarat:
 					['banker', 'player', 'tie']
 
 	def getTotal(self, card1, card2):
+		""" Returns the total of two cards after converting the 10-A to its integer value """
 		print card1, card2
 		if card1 == 'A':
 			card1 = 1
@@ -50,11 +51,18 @@ class baccarat:
 		return (card1 + card2)%10
 
 	def banker_draw(self, banker_total, banker_cards):
+		""" Draws a card for the banker, calculates the new total, and return the new set of cards and total. """
 		banker_draw = self.deck.draw_card()
 		banker_cards.append(banker_draw)
 		return self.getTotal(banker_total, banker_draw[0]), banker_cards
 
 	def play(self, msgs):
+		""" Plays the baccarat game. Banker and Player are dealt cards, with additional card delt according to the rules. 
+
+		Winners are added to the winners list and losers to the losers list.
+
+		Returns the list [winners, losers, result_msg]
+		"""
 		winners = []
 		losers = []
 
@@ -121,6 +129,7 @@ class baccarat:
 		return [winners, losers, result_msg]
 
 	def reset(self):
+		""" Resets the room to be empty."""
 		self.users = {}
 
 
