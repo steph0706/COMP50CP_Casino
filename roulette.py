@@ -2,7 +2,7 @@ import random
 
 class roulette:
     def __init__(self):
-         """ 
+        """ 
             dictionary mapping users --> [betsize, beton] 
         """
         self.users = {}

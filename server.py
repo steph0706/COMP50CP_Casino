@@ -10,7 +10,7 @@ import game_server
 SERVER = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 SERVER.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 INIT_MONEY = 1000
-NUM_GAMES = 1 # edit this to change number of games needed to connect before
+NUM_GAMES = 3 # edit this to change number of games needed to connect before
               # users can start connecting
 BUFF_SIZE = 4096
 
@@ -139,7 +139,7 @@ def get_one_user_info(games, users, users_lock, usr_queue, conn, addr):
 # message sending functions
 def msg_from_user_to_game(users, users_lock, games, game, message):
     proper_msg = set(['join', 'bet', 'continue', 'switch', 'quit', \
-        'bjack-move'])
+        'bjack-move', 'quit-game'])
     if message[0] not in proper_msg:
         print("Invalid message")
         return
