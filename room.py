@@ -5,23 +5,41 @@ from Queue import *
 class Room:
     def __init__(self, game, msgs):
         self.roomLock = threading.Lock()
+
+        """ a list of messages to be sent to the server to deal with """
         self.msgs   = msgs
+
+        """ a queue of bets """
         self.bets   = Queue()
+
+        """ a list representing the room containing users """
         self.room   = []
+
+        """ the game function to be played """
         self.game   = game
-        self.update = 0
+        """ stores the current game object """
         self.curr_game = None
         self.game()
+
+        """ 
+            keeps track of how many users have updated their result from the
+            game
+        """
+        self.update = 0
 
         start = threading.Thread(target=Room.waitForMinPlayers, args=(self,))
         start.start()
 
-
+    """ sends a waiting message to the user """
     def waitingMsg(self, user):
         if len(self.room) < 2:
             self.msgs.put(['wait', user[0], 
                 'Waiting for more users to join the room'])
     
+    """
+        waits for the current game in the room to finish and 
+        adds a user to the room
+    """
     def addToRoom(self, user):
         if self.roomLock.locked():
             self.msgs.put(['wait', user[0], 'Waiting for current game to '\
@@ -32,12 +50,18 @@ class Room:
         self.roomLock.release()
         self.waitingMsg(user)
 
+    """
+        updates a user's money in the user dictionary
+    """
     def updateMoney(self, user, new_money):
         for u in self.room:
             if u[0] == user:
                 u[1] = new_money
                 break
 
+    """
+        removes the user given by the username from the room
+    """
     def removeUser(self, username):
         user_to_remove = []
         for user in self.room:
@@ -46,13 +70,19 @@ class Room:
                 break
         self.room.remove(user_to_remove)
 
+    """
+        prints the users in the room - for debugging purposes
+    """
     def printRoom(self):
         print("Room start")
         for user in self.room:
             print(user)
         print("Room end")
 
-    # execute game once number of players >= 2
+    """
+        waits for the number of players in the room exceeds 2 and then executes
+        the actual game play
+    """
     def waitForMinPlayers(self):
         while True:
             time.sleep(0.01)
@@ -86,29 +116,33 @@ class Room:
                 self.getUpdate()
                 self.roomLock.release()
 
-    # puts bet on bet queue
+    """ puts bet on bet queue """
     def setBet(self, bet):
         self.bets.put(bet)
 
-    # loops until something is on bet queue, then pop it off and return
+    """ loops until something is on bet queue, then pop it off and return """
     def getBet(self):
         while self.bets.empty():
             pass
         return self.bets.get()
 
-
+    """ 
+        if a user decides to hit in a blackjack game, notifies the play thread
+        in the blackjack room to start the hitting/standing interaction
+    """
     def blackjackMove(self, user, move):
         if move == 'hit':
             self.curr_game.start_hit(user)
         else:
             self.curr_game.stop_hit(user)
 
-
-    # increment update count
+    """ increments update count """
     def setUpdate(self):
         self.update += 1
 
-    # loops until all players in room has updated then return
+    """ 
+        loops until all players have updated from the result of the game
+    """
     def getUpdate(self):
         while self.update < len(self.room):
             pass
