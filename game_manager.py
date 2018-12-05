@@ -132,7 +132,7 @@ class Game_manager:
         self.self_lock.acquire()
 
         idx = self.get_min_room()
-        if idx != -1
+        if idx != -1:
             rm[1] += 1
             t = threading.Thread(target=rm[0].addToRoom, 
                                  args=([user, money],))
