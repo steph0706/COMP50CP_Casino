@@ -309,7 +309,6 @@ def server_loop(ip_addr, port):
             msg_from_user_to_game(users, users_lock,games, 
                                     game_name, message)
 
-
 def main(args):
     if len(args) != 3:
         sys.exit("Usage: script, IP address, port number")

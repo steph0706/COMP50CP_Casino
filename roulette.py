@@ -7,16 +7,15 @@ class roulette:
         """
         self.users = {}
 
-    """ sets the users bet in the dictionary """
     def bet(self, user, betsize, beton):
+        """ sets the users bet in the dictionary """
         self.users[user] = [betsize, beton]
 
-
-    """ 
-        returns the correct bet message to send to the client, and the options
-        that the user can type
-    """
     def bet_message(self):
+        """ 
+            returns the correct bet message to send to the client, and the options
+            that the user can type
+        """
         return "Place your bets! Before all your bets, please type " \
                     + "Bet on it landing on an even number by typing 'even'\n" \
                     + "Bet on an odd number by typing 'odd'\n" \
@@ -33,21 +32,21 @@ class roulette:
                ['even', 'odd', '1-3', '2-3', '3-3', 'high', 'low'] \
                 + [str(i) for i in range(37)]
 
-    """ returns whether num is an integer or not """
     def isInt(self, num):
+        """ returns whether num is an integer or not """
         try:
             if int(num):
                 return True
         except:
             return False
 
-    """ 
-        contains the actual game play, and returns the result of the game.
-        the result of the game consists of a list of winners and losers and the
-        amount they won/lost respectively and the result of the game
-        to print to the client
-    """
     def play(self, msgs):
+         """ 
+            contains the actual game play, and returns the result of the game.
+            the result of the game consists of a list of winners and losers and the
+            amount they won/lost respectively and the result of the game
+            to print to the client
+        """
         winners = []
         losers  = []
         landon = random.randint(0, 36)
@@ -103,6 +102,6 @@ class roulette:
 
         return [winners, losers, "The result was " + str(landon) + "\n"]
 
-    """ resets the game """
     def reset(self):
+        """ resets the game """
         self.users = {}

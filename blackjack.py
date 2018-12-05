@@ -22,30 +22,31 @@ class blackjack:
         self.waitForHit = threading.Condition(self.hitLock)
         self.hitting = True
 
-    """ sets the users bet in the dictionary """
     def bet(self, user, betsize, beton):
+        """ sets the users bet in the dictionary """
         self.users[user] = [betsize, None]
 
-    """ 
-        returns the correct bet message to send to the client, in this case
-        there is no bet message
-    """
     def bet_message(self):
+        """ 
+            returns the correct bet message to send to the client, in this case
+            there is no bet message
+        """
         return "blackjack", ["blackjack"]
 
-    """ 
-        return trues if all the users have decided to stand, false otherwise
-    """
+
     def allDoneHitting(self):
+        """ 
+            return trues if all the users have decided to stand, false otherwise
+        """
         done = True
         for user, bet in self.users.iteritems():
             done = done and (bet[1] == 'stand')
         return done
 
-    """
-        returns true if the user's cards add up to more than 21
-    """
     def busted(self, cards):
+        """
+            returns true if the user's cards add up to more than 21
+        """
         total = 0
         for card in cards:
             value = self.deck.get_value(card)
@@ -58,13 +59,13 @@ class blackjack:
                 total -= 10
         return total > 21
 
-    """ 
-        contains the actual game play, and returns the result of the game.
-        the result of the game consists of a list of winners and losers and the
-        amount they won/lost respectively and the result of the game
-        to print to the client
-    """
-    def play(self, msgs):
+    def play(self, msgs):     
+        """ 
+            contains the actual game play, and returns the result of the game.
+            the result of the game consists of a list of winners and losers and the
+            amount they won/lost respectively and the result of the game
+            to print to the client
+        """
         winners = []
         losers = []
 
@@ -90,6 +91,8 @@ class blackjack:
                     if self.busted(bet[2:]):
                         msgs.put(['wait', user, 'Oops, you have already ' + \
                             'busted'])
+                        msgs.put(['wait', user, 'Waiting for other users to' \
+                            + 'finish betting'])
                         self.users[user][1] = 'stand'
                         break
                     card3 = self.deck.draw_card()
@@ -134,8 +137,9 @@ class blackjack:
  
         return [winners, losers, dealerMsg]
     
-    """ checks if the user got a natural (i.e. original deal == 21) """
+    
     def checkForNatural(self, cards):
+        """ checks if the user got a natural (i.e. original deal == 21) """
         if len(cards) == 2:
             card1 = cards[0]
             card2 = cards[1]
@@ -147,8 +151,9 @@ class blackjack:
                 return True
         return False
 
-    """ gets the dealers score """
+    
     def get_dealer(self, dealer):
+        """ gets the dealers score """
         msg = "Dealer's hand was "
         total = 0
         for card in dealer:
@@ -166,26 +171,27 @@ class blackjack:
             return -1, msg[:-2] + "\n"
         return total, msg[:-2] + "\n"
 
-    """ 
-        sets the user's move in the dictionary to stand 
-        and notifies the waiting thread that they've
-        started moves/hitting
-    """
+
     def stop_hit(self, user):
+         """ 
+            sets the user's move in the dictionary to stand 
+            and notifies the waiting thread that they've
+            started moves/hitting
+        """
         self.users[user][1] = 'stand'
         with self.hitLock:
             self.waitForHit.notify()
 
-    """ 
-        sets the user's move in the dictionary to hit
-        and notifies the waiting thread that they've
-        started moves/hitting
-    """
     def start_hit(self, user):
+        """ 
+            sets the user's move in the dictionary to hit
+            and notifies the waiting thread that they've
+            started moves/hitting
+        """
         self.users[user][1] = 'hit'
         with self.hitLock:
             self.waitForHit.notify()
 
-    """ resets the game """
     def reset(self):
+        """ resets the game """
         self.users = {}
