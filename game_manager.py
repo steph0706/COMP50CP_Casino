@@ -68,25 +68,27 @@ class Game_manager:
 
                     # if no message found loop back to beginning
                     message = ''
-                    self.self_lock.release()
-                    for message in m_list:
-                        self.self_lock.acquire()
-                        print(message)
-                        try:
-                            message = json.loads(message)
-                            user     = message[1] if len(message) > 1 else None
-                            money    = message[2] if len(message) > 2 else None
-                            betsize  = message[3] if len(message) > 3 else None
-                            beton    = message[4] if len(message) > 4 else None
-                            fun_name = self.MESSAGES[message[0]]
-                            self.self_lock.release()
-                            fun_name(self, user, money, betsize, beton)
-                        except Exception, e:
-                            print("Exception caught")
-                            print str(e)
+                    if len(m_list) == 0:
+                        self.self_lock.release()
+                        # continue
+                    else:
+                        for message in m_list:
                             print(message)
-                            print(type(message))
-                            self.self_lock.release()
+                            try:
+                                message = json.loads(message)
+                                user     = message[1] if len(message) > 1 else None
+                                money    = message[2] if len(message) > 2 else None
+                                betsize  = message[3] if len(message) > 3 else None
+                                beton    = message[4] if len(message) > 4 else None
+                                fun_name = self.MESSAGES[message[0]]
+                                self.self_lock.release()
+                                fun_name(self, user, money, betsize, beton)
+                            except Exception, e:
+                                print("Exception caught")
+                                print str(e)
+                                print(message)
+                                print(type(message))
+                                self.self_lock.release()
 
         self.SERVER.close()
 
@@ -95,7 +97,7 @@ class Game_manager:
         m = ''
         msgs = sock.recv(4096).split("\0")
         for m in msgs:
-            if m != '':
+            if m != '' and m != "\0":
                 message.append(m)
 
     # check message queue from rooms continuously
@@ -128,14 +130,14 @@ class Game_manager:
     def join_room(self, user, money, betsize, beton):
         print("adding user " + user + " to a room")
         self.self_lock.acquire()
-        for idx, rm in enumerate(self.rooms):
-            if rm[1] < self.cap:
-                rm[1] += 1
-                t = threading.Thread(target=rm[0].addToRoom, 
-                                     args=([user, money],))
-                t.start()
-                self.users[user] = idx
-                break
+
+        idx = self.get_min_room()
+        if idx != -1
+            rm[1] += 1
+            t = threading.Thread(target=rm[0].addToRoom, 
+                                 args=([user, money],))
+            t.start()
+            self.users[user] = idx
         else:
             new_room = room.Room(self.game_map[self.name], self.room_msgs)
 
@@ -150,6 +152,16 @@ class Game_manager:
 
         self.self_lock.release()
         print("release lock in join")
+
+    # returns index of room with the least amount of people
+    def get_min_room(self):
+        curr_min = self.cap
+        min_idx = -1
+        for idx, rm in enumerate(self.rooms):
+            if rm[1] < curr_min:
+                curr_min = rm[1]
+                min_idx = idx
+        return min_idx
 
     # each user sets the bet they made according to the specified game
     def handle_bet(self, user, money, betsize, beton):
