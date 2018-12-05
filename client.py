@@ -101,7 +101,7 @@ def handle_hit(details, server):
             print "Please type either hit or stand"
         else:
             break
-
+            
     if move == 'stand':
         print "Waiting for other users to finish betting"
     server.send(json.dumps(['bjack-move', details[1], move, 'blackjack']))
