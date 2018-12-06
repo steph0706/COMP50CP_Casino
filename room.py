@@ -49,8 +49,8 @@ class Room:
     
     def addToRoom(self, user):
         """
-            waits for the current game in the room to finish and 
-            adds a user to the room
+        waits for the current game in the room to finish and 
+        adds a user to the room
         """
         if self.roomLock.locked():
             self.msgs.put(['wait', user[0], 'Waiting for current game to '\
@@ -92,8 +92,8 @@ class Room:
 
     def waitForMinPlayers(self):
         """
-            waits for the number of players in the room exceeds 2 and then executes
-            the actual game play
+        waits for the number of players in the room exceeds 2 and then
+        executes the actual game play
         """
         while True:
             time.sleep(0.01)
@@ -126,8 +126,8 @@ class Room:
                     """
                     for otherUser in self.room:
                         if otherUser != user:
-                            self.msgs.put(['wait', otherUser[0], 'Waiting for '\
-                                + user[0] + " to bet"])
+                            self.msgs.put(['wait', otherUser[0], 
+                                'Waiting for ' + user[0] + " to bet"])
 
                     user_bet = self.getBet()
                     """ put the users bet into the game """
@@ -147,7 +147,7 @@ class Room:
    
     def getBet(self):
         """ 
-            loops until something is on bet queue, then pop it off and return 
+        loops until something is on bet queue, then pop it off and return 
         """
         while self.bets.empty():
             pass
@@ -155,8 +155,8 @@ class Room:
 
     def blackjackMove(self, user, move):
         """ 
-            if a user decides to hit in a blackjack game, notifies the play thread
-            in the blackjack room to start the hitting/standing interaction
+        if a user decides to hit in a blackjack game, notifies the play thread
+        in the blackjack room to start the hitting/standing interaction
         """
         if move == 'hit':
             self.curr_game.start_hit(user)

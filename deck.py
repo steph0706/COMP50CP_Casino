@@ -17,7 +17,9 @@ class deck:
         self.face_value = {'A':11, 'J':10, 'Q':10, 'K':10}
 
     def draw_card(self):
-        """ Draws a random card from the deck and reshuffle if deck is empty. """
+        """
+        Draws a random card from the deck and reshuffle if deck is empty.
+        """
         if len(self.deck) == 0:
             self.reshuffle()
             draw_card()

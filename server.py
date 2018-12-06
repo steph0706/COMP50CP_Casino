@@ -1,6 +1,6 @@
 """
 
-    server.py
+    Author: all_in
 
     Creates the casino server and listens for connections from game_server
     and client. Facilitates message passing between client and game_server

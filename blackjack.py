@@ -4,20 +4,20 @@ import threading
 class blackjack:
     def __init__(self):
         """ 
-            dictionary mapping users --> [bet, card1, card2...card-n] 
+        dictionary mapping users --> [bet, card1, card2...card-n] 
         """
         self.users = {}
         self.deck = deck.deck()
 
         """ 
-            locks the play thread if none of the players have decided
-            their next move, whether that be stand or hit
+        locks the play thread if none of the players have decided
+        their next move, whether that be stand or hit
         """
         self.hitLock = threading.Lock()
 
         """
-            the condition so that the play thread will wait until a player
-            has decided what to do as their move
+        the condition so that the play thread will wait until a player
+        has decided what to do as their move
         """
         self.waitForHit = threading.Condition(self.hitLock)
         self.hitting = True
@@ -28,15 +28,15 @@ class blackjack:
 
     def bet_message(self):
         """ 
-            returns the correct bet message to send to the client, in this case
-            there is no bet message
+        returns the correct bet message to send to the client, in this case
+        there is no bet message
         """
         return "blackjack", ["blackjack"]
 
 
     def allDoneHitting(self):
         """ 
-            return trues if all the users have decided to stand, false otherwise
+        return trues if all the users have decided to stand, false otherwise
         """
         done = True
         for user, bet in self.users.iteritems():
@@ -45,7 +45,7 @@ class blackjack:
 
     def busted(self, cards):
         """
-            returns true if the user's cards add up to more than 21
+        returns true if the user's cards add up to more than 21
         """
         total = 0
         for card in cards:
@@ -61,10 +61,10 @@ class blackjack:
 
     def play(self, msgs):     
         """ 
-            contains the actual game play, and returns the result of the game.
-            the result of the game consists of a list of winners and losers and
-            the amount they won/lost respectively and the result of the game
-            to print to the client
+        contains the actual game play, and returns the result of the game.
+        the result of the game consists of a list of winners and losers and
+        the amount they won/lost respectively and the result of the game
+        to print to the client
         """
         winners = []
         losers = []
@@ -75,8 +75,8 @@ class blackjack:
             card2 = self.deck.draw_card()
             self.users[user] = self.users[user] + [card1, card2]
             """ 
-                puts message in specified format in message queue for 
-                game manager to handle
+            puts message in specified format in message queue for 
+            game manager to handle
             """
             msgs.put(['bjack-deal', user, None, None, [card1, card2]])
         
@@ -99,21 +99,21 @@ class blackjack:
                         """
                         msgs.put(['wait', user, 'Oops, you have already ' + \
                             'busted'])
-                        msgs.put(['wait', user, 'Waiting for other users to' + \
-                            ' finish betting'])
+                        msgs.put(['wait', user, 'Waiting for other users to' \
+                            + ' finish betting'])
                         self.users[user][1] = 'stand'
                         break
                     card3 = self.deck.draw_card()
                     self.users[user] += [card3]
 
                     """ 
-                        reset to None to wait for user to decide whether to
-                        stand or hit
+                    reset to None to wait for user to decide whether to
+                    stand or hit
                     """
                     self.users[user][1] = None
                     """ 
-                        puts message in specified format in message queue for 
-                        game manager to handle
+                    puts message in specified format in message queue for 
+                    game manager to handle
                     """
                     msgs.put(['bjack-hit', user, None, None, card3])
             
@@ -186,9 +186,9 @@ class blackjack:
 
     def stop_hit(self, user):
         """ 
-            sets the user's move in the dictionary to stand 
-            and notifies the waiting thread that they've
-            started moves/hitting
+        sets the user's move in the dictionary to stand 
+        and notifies the waiting thread that they've
+        started moves/hitting
         """
         self.users[user][1] = 'stand'
         with self.hitLock:
@@ -196,9 +196,9 @@ class blackjack:
 
     def start_hit(self, user):
         """ 
-            sets the user's move in the dictionary to hit
-            and notifies the waiting thread that they've
-            started moves/hitting
+        sets the user's move in the dictionary to hit
+        and notifies the waiting thread that they've
+        started moves/hitting
         """
         self.users[user][1] = 'hit'
         with self.hitLock:

@@ -1,6 +1,6 @@
 """
 
-    game_manager.py
+    Author: all_in
 
     This is a generic manager class for a specified game module
     to manage the rooms and users playing the game

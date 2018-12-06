@@ -1,9 +1,14 @@
+"""
+    Author: all_in
+
+    roulette class implements the playing functionality of the game.
+"""
 import random
 
 class roulette:
     def __init__(self):
         """ 
-            dictionary mapping users --> [betsize, beton] 
+        dictionary mapping users --> [betsize, beton] 
         """
         self.users = {}
 
@@ -13,22 +18,22 @@ class roulette:
 
     def bet_message(self):
         """ 
-            returns the correct bet message to send to the client, and the options
-            that the user can type
+        returns the correct bet message to send to the client, and the options
+        that the user can type
         """
         return "Place your bets! Before all your bets, please type " \
-                    + "Bet on it landing on an even number by typing 'even'\n" \
-                    + "Bet on an odd number by typing 'odd'\n" \
-                    + "Bet on it landing on a number between 0 and 12 by " \
-                    + "typing '1-3'\n" \
-                    + "Bet on it landing on a number between 13 and 25 by " \
-                    + "typing '2-3'\n" \
-                    + "Bet on it landing on a number between 26 and 36 by " \
-                    + "typing '3-3'\n" \
-                    + "Bet on it landing on a specific number by typing the " \
-                    + "number\n" \
-                    +"Type 'low' to bet between 0 and 18, and type 'high' " \
-                    + "to bet higher than 18\n", \
+                + "Bet on it landing on an even number by typing 'even'\n" \
+                + "Bet on an odd number by typing 'odd'\n" \
+                + "Bet on it landing on a number between 0 and 12 by " \
+                + "typing '1-3'\n" \
+                + "Bet on it landing on a number between 13 and 25 by " \
+                + "typing '2-3'\n" \
+                + "Bet on it landing on a number between 26 and 36 by " \
+                + "typing '3-3'\n" \
+                + "Bet on it landing on a specific number by typing the " \
+                + "number\n" \
+                +"Type 'low' to bet between 0 and 18, and type 'high' " \
+                + "to bet higher than 18\n", \
                ['even', 'odd', '1-3', '2-3', '3-3', 'high', 'low'] \
                 + [str(i) for i in range(37)]
 
@@ -42,10 +47,10 @@ class roulette:
 
     def play(self, msgs):
         """ 
-            contains the actual game play, and returns the result of the game.
-            the result of the game consists of a list of winners and losers and the
-            amount they won/lost respectively and the result of the game
-            to print to the client
+        contains the actual game play, and returns the result of the game.
+        the result of the game consists of a list of winners and losers and
+        the amount they won/lost respectively and the result of the game
+        to print to the client
         """
         winners = []
         losers  = []
