@@ -1,7 +1,7 @@
 # all_in
-## Thu Cao, Long Tran, Stephanie Wong
+### Thu Cao, Long Tran, Stephanie Wong
 
-# PROJECT
+# Project
 
 This casino, implemented in python, sets out to deliver three games for clients interested in playing virtual casino games: baccarat, blackjack and roulette. Clients will receive the same experience playing in this casino as if they were there in reality. 
 
@@ -27,7 +27,7 @@ python client.py [IP-address] [Port number]
 ```
 
 
-# FILES
+# Files
 `server.py`
 Creates the casino server and listens for connections from game_server and client. Facilitates message passing between client and game_server.
 
