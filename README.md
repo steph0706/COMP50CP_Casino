@@ -31,19 +31,20 @@ Contains the actual game play for baccarat
 Contains the actual game play for blackjack
 
 # Instructions to run Program
-server side:
+Server side (IP-address needs to be your personal IP):
 ```
 python server.py [IP-address] [Port number]
 ```
 
-in a different terminals:
+in a different terminals (after running the main server):
 ```
 python game_server.py [IP-address] [Port number] blackjack
 python game_server.py [IP-address] [Port number] roulette
 python game_server.py [IP-address] [Port number] baccarat
 ```
 
-client side:
+Client side (after all servers have started running):
+
 ```
 python client.py [IP-address] [Port number]
 ```
